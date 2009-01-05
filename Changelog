@@ -1,0 +1,6 @@
+implementado sistema de notificação sem janelas pop-up
+Adicionado menus para logoff usando UIManager
+verificação de locação
+Locados e atrasados mostram nome do cliente e titulo do dvd
+Formulário de cadastro com tamanho dos campos e posição fixos
+código agora esta no modelo MVC!
