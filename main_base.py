@@ -4,6 +4,16 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+def iconMenuItem(title, stock):
+    mItem = gtk.ImageMenuItem(title)
+    im = gtk.Image()
+    try:
+        im.set_from_stock(stock, gtk.ICON_SIZE_MENU)
+        mItem.set_image(im)
+    except AttributeError:
+        pass
+    return mItem
+
 class Login:
    
     def createMenus(self, vbox):
@@ -143,7 +153,7 @@ class Loja:
         button_retirada = gtk.Button("Retirada")
         button_retirada.connect("clicked",self.open_locar)
       
-        button_devolucao = gtk.Button("Devolucao")
+        button_devolucao = gtk.Button("Devolução")
         button_devolucao.connect("clicked",self.open_devolver)
    
         button_venda = gtk.Button("Venda")
@@ -249,13 +259,123 @@ class Cadastro_clientes:
     def close(self,w):
         Loja.show_notify = False
         self.w_cad_clientes.destroy()
+    
+    def sensitive(self,is_sensitive):
+        self.entry_nome.set_sensitive(is_sensitive)
+        
+    def close_localizar(self,w):
+        self.w_localiza_clientes.hide()
+        
+    def get_campos(self, dadoscliente):
+        self.cod = dadoscliente[0][0]
+        self.entry_nome.set_text(dadoscliente[0][1])
+        self.is_sensitive = False
+        self.sensitive(self.is_sensitive)
+        self.tb_editar.set_sensitive(True)
+        
+    def novo(self, widget):
+        self.is_sensitive = True
+        self.sensitive(self.is_sensitive)
+        self.editando = False
+        self.tb_editar.set_sensitive(False)
+        
+        self.entry_nome.set_text("")
+    
+    def editar(self, widget):
+        self.is_sensitive = True
+        self.sensitive(self.is_sensitive)
+        self.editando = True
+        
+    def localizar_selecionado(self, treeview, path, view_column):
+        treeiter = self.lista.get_iter(path)
+        value = int(self.lista.get_value(treeiter, 0))
+        dadoscliente = self.controle.listar_cliente(value)
+        self.get_campos(dadoscliente)
+        self.w_localiza_clientes.hide()
+        
+    def localizar(self, widget):
+        self.w_localiza_clientes = gtk.Dialog()
+        self.w_localiza_clientes.set_position(gtk.WIN_POS_CENTER)
+        self.w_localiza_clientes.set_title("CEF SHOP - Localizar Cliente")
+        self.w_localiza_clientes.set_size_request(480,220)
+        self.w_localiza_clientes.connect("destroy", self.close_localizar)
+        
+#------Lista
+        vpaned = gtk.VPaned()
+        self.w_localiza_clientes.vbox.add(vpaned)
 
+        frame_locados = gtk.Frame("Clientes")
+        vpaned.add(frame_locados)
+
+        liststore = self.create_list_localizar()
+        frame_locados.add(liststore)
+
+#-------Botoes     
+
+        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        button_cancel.connect("clicked", self.close_localizar)
+        #button_ok = gtk.Button(stock=gtk.STOCK_OK)
+        #button_ok.connect("clicked", self.localizar_selecionado)
+
+        bbox = gtk.HButtonBox ()
+        bbox.set_layout(gtk.BUTTONBOX_END)
+        self.w_localiza_clientes.action_area.pack_start(bbox, False, True, 0)
+        
+        bbox.add(button_cancel)
+        button_cancel.set_flags(gtk.CAN_DEFAULT)
+
+        #bbox.add(button_ok)
+        button_cancel.grab_default()
+
+        self.w_localiza_clientes.show_all()
+        self.w_localiza_clientes.show()
+        
+    def create_list_localizar(self):
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+        self.lista = gtk.ListStore(str, str)
+        tree_view = gtk.TreeView(self.lista)
+        scrolled_window.add_with_viewport (tree_view)
+    
+        clientes = self.controle.locate_clientes()
+        for cliente in clientes:
+            codigo = cliente[0]
+            nome = cliente[1]
+            self.lista.append([codigo, nome])
+           
+        cell1 = gtk.CellRendererText()
+        column1 = gtk.TreeViewColumn("Codigo", cell1, text=0)
+        
+        cell2 = gtk.CellRendererText()
+        column2 = gtk.TreeViewColumn("Nome", cell2, text=1)
+        
+        tree_view.append_column(column1)
+        tree_view.append_column(column2)
+        
+        tree_view.connect("row_activated",  self.localizar_selecionado)
+        return scrolled_window
+        
+    def excluir(self, widget):
+        pass
+    
     def cadastra (self, widget, entry_nome):
+        if self.is_sensitive == False:
+            return
         name = entry_nome.get_text()
-        try:
-            self.controle.cadastra_cliente(name)
-        except:
-            pass
+        
+        if self.editando == True:
+            try:
+                self.controle.cadastra_cliente(self.cod, name, True)
+            except:
+                pass  
+            self.is_sensitive = False
+            self.sensitive(self.is_sensitive)
+        else:
+            try:
+                self.controle.cadastra_cliente(None, name, False)
+            except:
+                pass
         status = self.controle.notify()
         if status[0] == True:
             Loja.show_notify = True
@@ -269,13 +389,40 @@ class Cadastro_clientes:
         self.w_cad_clientes = gtk.Dialog()
         self.w_cad_clientes.set_position(gtk.WIN_POS_CENTER)
         self.w_cad_clientes.set_size_request(580,280)
-        self.w_cad_clientes.set_border_width(4)
+        #self.w_cad_clientes.set_border_width(8)
         self.w_cad_clientes.set_title("CEF SHOP - Cadastro de Clientes")
         self.w_cad_clientes.connect("destroy", self.close)
         self.controle = controle
+        self.is_sensitive = True
+        self.editando = False
+
+#------Toolbar
+        toolbar = gtk.Toolbar()
+        toolbar.set_style(gtk.TOOLBAR_BOTH)
+        self.w_cad_clientes.vbox.pack_start(toolbar, False, False, 5)
+
+        tb_novo = gtk.ToolButton("Novo")
+        tb_novo.set_stock_id(gtk.STOCK_NEW)
+        tb_novo.connect("clicked", self.novo)
+        toolbar.insert(tb_novo, -1)
+
+        tb_procura = gtk.ToolButton("Localizar")
+        tb_procura.set_stock_id(gtk.STOCK_FIND)
+        tb_procura.connect("clicked", self.localizar)
+        toolbar.insert(tb_procura, -1)
+        
+        self.tb_editar = gtk.ToolButton("Editar")
+        self.tb_editar.set_sensitive(False)
+        self.tb_editar.set_stock_id(gtk.STOCK_EDIT)
+        self.tb_editar.connect("clicked", self.editar)
+        toolbar.insert(self.tb_editar, -1)
+        
+        #tb_delete = gtk.ToolButton("Excluir")
+        #tb_delete.set_stock_id(gtk.STOCK_DELETE)
+        #tb_delete.connect("clicked", self.excluir)
+        #toolbar.insert(tb_delete, -1)
 
 #------Frame Dados pessoais
-
         frame_dados = gtk.Frame("Dados Pessoais")
         self.w_cad_clientes.vbox.pack_start(frame_dados,False, True, 4)       
       
@@ -288,21 +435,20 @@ class Cadastro_clientes:
         
         label_nome = gtk.Label("Nome :")
         f_label.put(label_nome, 2, 14)
-        entry_nome = gtk.Entry(0)
-        entry_nome.set_size_request(400,28)
-        f_entry.put(entry_nome, 10, 10)
+        self.entry_nome = gtk.Entry(0)
+        self.entry_nome.set_size_request(400,28)
+        f_entry.put(self.entry_nome, 10, 10)
         
         label_cpf = gtk.Label("CPF :")
         f_label.put(label_cpf, 2, 44)
-        entry_cpf = gtk.Entry(0)
-        entry_cpf.set_size_request(200,28)
-        f_entry.put(entry_cpf, 10, 40)
+        self.entry_cpf = gtk.Entry(0)
+        self.entry_cpf.set_size_request(200,28)
+        f_entry.put(self.entry_cpf, 10, 40)
                   
         vbox_labelentry.pack_start(f_label, False, True, 4)
         vbox_labelentry.pack_start(f_entry, False, True, 4)
 
 #-------area de notificacao
-
         amarelo_pastel = gtk.gdk.color_parse("#e4e3a9")
         self.hboxnotify = gtk.HBox(False)
         #vbox_main.pack_start(self.hboxnotify, False, True, 2)
@@ -328,11 +474,10 @@ class Cadastro_clientes:
         event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
 
 #-------Botoes
-
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
-        button_ok.connect("clicked", self.cadastra, entry_nome)
+        button_ok.connect("clicked", self.cadastra, self.entry_nome)
 
         bbox = gtk.HButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_END)
@@ -345,11 +490,9 @@ class Cadastro_clientes:
         button_cancel.grab_default()
           
 #------Mostra tudo
-
         self.w_cad_clientes.show_all()
         self.hboxnotify.hide()
         self.w_cad_clientes.show()
-
 #-----------------------------------------------------
 
 class Locar:
@@ -360,14 +503,14 @@ class Locar:
         self.hboxnotify.hide()
         
     def close(self,w):
+        Loja.show_notify = False
         self.w_locar.destroy()
 
     def cadastra (self,widget, entry_cliente, entry_dvd):
         cod_cliente = entry_cliente.get_text()
         cod_dvd = entry_dvd.get_text()       
-        dias = '7'
         try:
-            self.controle.alugar(cod_cliente, cod_dvd, dias)
+            self.controle.alugar(cod_cliente, cod_dvd)
         except:
             pass
         status = self.controle.notify()
@@ -389,7 +532,6 @@ class Locar:
         self.controle = controle
 
 #-------Elementos       
-        
         label_cliente = gtk.Label("Codigo do Cliente :")
         entry_cliente = gtk.Entry(0)
 
@@ -397,11 +539,10 @@ class Locar:
         entry_dvd = gtk.Entry(0)
      
 #------Divisao v principal
-
         vbox_main = gtk.VBox(False, 2)
         self.w_locar.vbox.add(vbox_main)   
+        
 #------Frame cadastra
-
         frame_dados = gtk.Frame("Locação")
         vbox_main.pack_start(frame_dados, False, True, 2)
       
@@ -444,8 +585,8 @@ class Locar:
         event_box.realize()
         #event_box.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
         event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
+        
 #-------Botoes     
-
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
@@ -464,7 +605,6 @@ class Locar:
         self.w_locar.show_all()
         self.hboxnotify.hide()
         self.w_locar.show()
-
 #-----------------------------------------------------
 
 class Devolver:
@@ -502,7 +642,6 @@ class Devolver:
         self.controle = controle
 
 #-------Elementos       
-        
         label_dvd = gtk.Label("Codigo do DvD :")
         entry_dvd = gtk.Entry(0)
 
@@ -510,7 +649,6 @@ class Devolver:
         vbox_main = gtk.VBox(False, 2)
         self.w_devolver.vbox.add(vbox_main)      
 #------Frame cadastra
-
         frame_dados = gtk.Frame("Devolução")
         vbox_main.pack_start(frame_dados, False, True, 2)
       
@@ -550,8 +688,8 @@ class Devolver:
         event_box.realize()
         #event_box.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
         event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
+        
 #-------Botoes     
-
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
@@ -567,11 +705,9 @@ class Devolver:
         bbox.add(button_ok)
         button_cancel.grab_default()
 
-
         self.w_devolver.show_all()
         self.hboxnotify.hide()
         self.w_devolver.show()
-        
 #-----------------------------------------------------
 
 class Admin:
@@ -592,7 +728,6 @@ class Admin:
         menuitem = iconMenuItem(('_Fechar'),gtk.STOCK_CLOSE)
         menuitem.connect('activate', gtk.main_quit)
         menu.add(menuitem)
-    
     
     def notification (self, widget, focus):
         status = self.controle.notify()
@@ -626,7 +761,7 @@ class Admin:
         self.w_admin = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.w_admin.set_position(gtk.WIN_POS_CENTER)
         self.w_admin.connect("delete_event", lambda w,e: gtk.main_quit())
-        self.w_admin.set_title("CEF SHOP - Administração")
+        self.w_admin.set_title("CEF SHOP - AdministraÃ§Ã£o")
         self.w_admin.set_size_request(580,280)
         self.controle = controle
 
@@ -655,7 +790,6 @@ class Admin:
         vbox_main.pack_start(hbox_main, True, True, 2)
 
 #------Divisoes v dos elementos 
-       
         vbox1 = gtk.VBox(True, 1)
         hbox_main.pack_start(vbox1, True, True, 2)
  
@@ -675,7 +809,6 @@ class Admin:
         vbox_cad.add(button_filmes)
 
 #------Frame Controle
-
         frame_controle = gtk.Frame("Controle")
         vbox2.pack_start(frame_controle, True, True, 2)
  
@@ -688,10 +821,8 @@ class Admin:
         vbox_controle.add(button_atrasados)
 
 #-------Mostra tudo
-
         self.w_admin.show_all()
         self.w_admin.show()
-
 #-----------------------------------------------------
 
 class popup:
@@ -716,13 +847,11 @@ class popup:
         label.show()
         button_ok.show()
         self.w_popup.show()
-
 #-----------------------------------------------------
 
 class Generos:
 
     def create_list(self):
-
         scrolled_window = gtk.ScrolledWindow()
         scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 
@@ -767,7 +896,6 @@ class Generos:
         self.controle = controle
 
 #-------Elementos       
-        
         label_descricao = gtk.Label("Descrição :")
         entry_descricao = gtk.Entry(0)
   
@@ -782,7 +910,6 @@ class Generos:
         frame_generos.add(liststore)
 
 #------Frame cadastra
-
         frame_dados = gtk.Frame("Cadastrar Novo Genero")
         self.w_generos.vbox.add(frame_dados)
       
@@ -800,7 +927,6 @@ class Generos:
         vbox_entry.pack_start(entry_descricao, False, True, 2)
 
 #-------Botoes     
-
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
@@ -818,7 +944,6 @@ class Generos:
 
         self.w_generos.show_all()
         self.w_generos.show()
-        
 #-----------------------------------------------------
 
 class Filmes:
@@ -842,7 +967,6 @@ class Filmes:
         self.controle = controle
 
 #-------Elementos       
-        
         label_titulo = gtk.Label("Titulo :")
         entry_titulo = gtk.Entry(0)
 
@@ -856,9 +980,7 @@ class Filmes:
         label_quantidade = gtk.Label("Quantidade :")
         entry_quantidade = gtk.Entry(0)
      
-        
 #------Frame cadastra
-
         frame_dados = gtk.Frame("Dados do Filme")
         self.w_filmes.vbox.add(frame_dados)
       
@@ -881,9 +1003,7 @@ class Filmes:
         vbox_label.pack_start(label_quantidade, False, True, 8)
         vbox_entry.pack_start(entry_quantidade, False, True, 2)
 
-
 #-------Botoes     
-
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
@@ -899,10 +1019,8 @@ class Filmes:
         bbox.add(button_ok)
         button_cancel.grab_default()
 
-
         self.w_filmes.show_all()
         self.w_filmes.show()
-
 #-----------------------------------------------------
 
 class Locados:
@@ -941,7 +1059,6 @@ class Locados:
         tree_view.append_column(column3)
         tree_view.append_column(column4)
 
-
         return scrolled_window
    
     def __init__(self,controle):
@@ -964,7 +1081,6 @@ class Locados:
         frame_locados.add(liststore)
 
 #-------Botoes     
-
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
         button_close.connect("clicked", self.close)
         
@@ -977,7 +1093,6 @@ class Locados:
 
         self.w_locados.show_all()
         self.w_locados.show()
-
 #-----------------------------------------------------
 
 class Atrasados:
@@ -1016,7 +1131,6 @@ class Atrasados:
         tree_view.append_column(column3)
         tree_view.append_column(column4)
 
-
         return scrolled_window
    
     def __init__(self, controle):
@@ -1054,15 +1168,4 @@ class Atrasados:
 
         self.w_atrasados.show_all()
         self.w_atrasados.show()
-        
 #-----------------------------------------------------
-
-def iconMenuItem(title, stock):
-    mItem = gtk.ImageMenuItem(title)
-    im = gtk.Image()
-    try:
-        im.set_from_stock(stock, gtk.ICON_SIZE_MENU)
-        mItem.set_image(im)
-    except AttributeError:
-        pass
-    return mItem

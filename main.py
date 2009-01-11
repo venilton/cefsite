@@ -1,5 +1,7 @@
 # -*- coding: latin-1 -*-
+
 from querys import Modelo
+
 query = Modelo()
 query.conecta()
 

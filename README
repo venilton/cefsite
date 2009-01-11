@@ -1,14 +1,13 @@
 Crie um banco de dados vazio no Mysql
 
-Edite o arquivo create_table altere os valores de 
-bd = MySQLdb.connect('localhost','marcos','marcos123')
-        bd.select_db('cefshop')
+Edite o arquivo dblogin.py
          
 onde marcos é o nome do usuario do banco de dados
 marcos123 é a senha
 e cefshop o nome do bando de dados
-altere esses valores pelos que vc forneceu ao Mysql
 
-então rode o arquivo create_table.py que ele criará as tabelas no banco de dados.
+altere esses valores pelos que forneceu ao Mysql
 
-Agora vc pode rodar o cefshop.py
+então rode o arquivo create_table.py  para que ele crie as tabelas no banco de dados.
+
+Agora pode rodar o cefshop.py

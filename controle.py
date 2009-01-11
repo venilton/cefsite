@@ -1,8 +1,10 @@
 # coding: utf-8
 
+import gtk
 import pygtk
 pygtk.require('2.0')
-import gtk
+from datetime import date
+
 from querys import Modelo
 from main_base import Login
 
@@ -35,18 +37,35 @@ class Controle:
         else:
             return False, self.notify_text
     
-    def cadastra_cliente(self,name):
+    def cadastra_cliente(self, cod, name, editando):
         if name=='':
             self.notify_text = 'ERRO : Campo NOME precisa ser preenchido!'
             self.status = False
             raise  EmBranco , 'Nome deve ser preenchido'
                 
         else:
-            self.modelo.insert_cliente(name)
-            self.notify_text = 'Cliente ' + name +' cadastrado com sucesso!'
-            self.status = True
+            if editando == True:
+                self.modelo.update_cliente(cod, name)
+                self.notify_text = 'Cliente ' + name +' Editado com sucesso!'
+            else:    
+                self.modelo.insert_cliente(name)
+                self.notify_text = 'Cliente ' + name +' cadastrado com sucesso!'
+                self.status = True
+            
+    def locate_clientes(self):
+        rows = self.modelo.select_all_clientes()
+        return rows
     
-    def alugar(self,cod_cliente,cod_dvd,dias):
+    def listar_cliente(self,cod):
+        rows = self.modelo.select_cliente(cod)
+        return rows
+    
+    def alugar(self,cod_cliente,cod_dvd):
+        today = date.today()
+        if date(today.year, today.day, today.month).weekday() == 6 : # Sunday
+            dias = 7  # Uma semana para devolução com preço cheio
+        elif date(today.year, today.day, today.month).weekday() == 1: # Tuesday
+            dias = 5 # Devolução no proximo domingo
         
         if cod_cliente =='':
             self.notify_text = 'ERRO : campo CÓDIGO CLIENTE precisa ser preenchido!'

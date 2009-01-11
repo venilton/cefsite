@@ -1,6 +1,8 @@
 import sys
 import MySQLdb
 
+import dblogin
+
 class Modelo:
     def __init__(self):
         self.conecta()
@@ -9,8 +11,8 @@ class Modelo:
         global bd
         global cursor
         try:
-            bd = MySQLdb.connect('localhost','marcos','marcos123')
-            bd.select_db('cefshop')
+            bd = MySQLdb.connect('localhost',dblogin.user,dblogin.passwd)
+            bd.select_db(dblogin.dbname)
             cursor = bd.cursor()
             
         except MySQLdb.Error, e:
@@ -36,6 +38,13 @@ class Modelo:
         rows = cursor.fetchall ()
         return rows
 
+    def update_cliente(self, cod , name):
+        cursor.execute ("""
+               UPDATE clientes SET nome = %s
+               WHERE cod_cliente = %s
+             """, (name, cod))
+        bd.commit()
+
     def insert_generodvd(self,name):
         cursor.execute ('INSERT INTO generodvd (descricao) VALUES (%s)',(name))
         bd.commit()
@@ -49,7 +58,6 @@ class Modelo:
         cursor.execute ('SELECT cod_genero FROM generodvd WHERE descricao = %s', name)
         rows = cursor.fetchall ()
         return rows
-
 
     def insert_filme(self,genero,name,quantidade):
         cursor.execute ('INSERT INTO filme (cod_genero, titulo, quantidade) VALUES (%s,%s,%s)',(genero,name,quantidade))

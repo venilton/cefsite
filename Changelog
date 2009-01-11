@@ -1,6 +1,16 @@
+-------------------------------------------------------------------------
+(11/01/09) marcos_venilton@yahoo.com.br
+-------------------------------------------------------------------------
+Criado o arquivo dblogin, para centralizar informações de acesso ao banco de dados
+Cadastro de clientes com rotinas de localização e edição
+Calculo da data de devolução dos filmes baseado no dia da semana, usando o modulo datetime
+-------------------------------------------------------------------------
+(04/01/09) marcos_venilton@yahoo.com.br 
+-------------------------------------------------------------------------
 implementado sistema de notificação sem janelas pop-up
-Adicionado menus para logoff usando UIManager
-verificação de locação
+Adicionado menus para logoff usando GtkMenu
+Verificação de locação
 Locados e atrasados mostram nome do cliente e titulo do dvd
-Formulário de cadastro com tamanho dos campos e posição fixos
+Formulário de cadastro de clientes com tamanho dos campos e posição fixos
 código agora esta no modelo MVC!
+-------------------------------------------------------------------------

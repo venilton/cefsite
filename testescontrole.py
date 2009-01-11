@@ -1,6 +1,8 @@
+import unittest
+
 import controle
 from controle import Controle
-import unittest
+
 
 class TestesCadastroClientes(unittest.TestCase):
     """    Testes Cadastro de Clientes    """
@@ -8,7 +10,7 @@ class TestesCadastroClientes(unittest.TestCase):
     
     def testCamposEmBranco(self):
         """Cadastro de Clientes Campo nome nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.cadastra_cliente, "")
+        self.assertRaises(controle.EmBranco, self.metodo.cadastra_cliente, "", "", "")
         
 class TestesLocacao(unittest.TestCase):
     """    Testes Locacao    """
@@ -16,7 +18,7 @@ class TestesLocacao(unittest.TestCase):
     
     def testCodDVDEmBranco(self):
         """Locacao Campo Codigo DVD nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.alugar, "1","","1")
+        self.assertRaises(controle.EmBranco, self.metodo.alugar, "1", "", "1")
     
     def testCodClienteEmBranco(self):
         """Locacao Campo Codigo Cliente nao deve ficar em branco"""
