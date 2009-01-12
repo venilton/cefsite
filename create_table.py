@@ -5,8 +5,8 @@ def connect():
     global bd
     global cursor
     try:
-        bd = MySQLdb.connect('localhost','marcos','marcos123')
-        bd.select_db('cefshop')
+        bd = MySQLdb.connect('localhost',dblogin.user,dblogin.passwd)
+        bd.select_db(dblogin.dbname)
         cursor = bd.cursor()
         print "Conectado."
     except MySQLdb.Error, e:
