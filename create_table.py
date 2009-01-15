@@ -2,92 +2,115 @@
 import MySQLdb
 
 def connect():
-    global bd
-    global cursor
-    try:
-        bd = MySQLdb.connect('localhost','marcos','marcos123')
-        bd.select_db('cefshop')
-        cursor = bd.cursor()
-        print "Conectado."
-    except MySQLdb.Error, e:
-        print "Error %d: %s" % (e.args[0], e.args[1])
-        sys.exit (1) 
+	global bd
+	global cursor
+	try:
+		bd = MySQLdb.connect('localhost','marcos','marcos123')
+		bd.select_db('cefshop')
+		cursor = bd.cursor()
+		print "Conectado."
+	except MySQLdb.Error, e:
+		print "Error %d: %s" % (e.args[0], e.args[1])
+		sys.exit (1) 
 
 def clientes():
-    cursor.execute ("DROP TABLE IF EXISTS clientes")
-    cursor.execute ("""
-        CREATE TABLE clientes
-        (
-   	    cod_cliente    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-   	    PRIMARY KEY (cod_cliente),
-   	    nome    VARCHAR(30) NOT NULL 
+	cursor.execute ("DROP TABLE IF EXISTS clientes")
+	cursor.execute ("""
+	CREATE TABLE clientes (
+	  cod_cliente INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+	  nome VARCHAR(50) NULL,
+	  telefone VARCHAR(15) NULL,
+	  celular VARCHAR(15) NULL,
+	  endereco VARCHAR(100) NULL,
+	  bairro VARCHAR(40) NULL,
+	  cidade VARCHAR(40) NULL,
+	  estado VARCHAR(2) NULL DEFAULT 'SP',
+	  cep VARCHAR(8) NULL,
+	  PRIMARY KEY(cod_cliente)
 	)
-      """)
-    print " clientes... feito."
+	  """)
+	print " clientes... feito."
+
+def caixa():
+	cursor.execute ("DROP TABLE IF EXISTS caixa")
+	cursor.execute ("""
+		CREATE TABLE caixa (
+		  cod_caixa INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+		  nome VARCHAR(20) NULL,
+		  faturar INTEGER UNSIGNED NULL,
+		  PRIMARY KEY(cod_caixa)
+		)
+	""")
+	print " caixa... feito."
 
 def generodvd():
-    cursor.execute ("DROP TABLE IF EXISTS generodvd")
-    cursor.execute ("""
-        CREATE TABLE generodvd
-        (
-   	    cod_genero    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-   	    PRIMARY KEY (cod_genero),
-   	    descricao    VARCHAR(20) NOT NULL 
+	cursor.execute ("DROP TABLE IF EXISTS generodvd")
+	cursor.execute ("""
+		CREATE TABLE generodvd
+		(
+   		cod_genero	INT UNSIGNED NOT NULL AUTO_INCREMENT,
+   		PRIMARY KEY (cod_genero),
+   		descricao	VARCHAR(20) NOT NULL 
 	)
-      """)
-    print " generodvd... feito."
+	  """)
+	print " generodvd... feito."
 
 def filme():
-    cursor.execute ("DROP TABLE IF EXISTS filme")
-    cursor.execute ("""
-        CREATE TABLE filme
-        (
-   	    cod_filme    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-   	    PRIMARY KEY (cod_filme),
-            cod_genero INT UNSIGNED NOT NULL,
-   	    titulo    VARCHAR(20) NOT NULL,
-            quantidade int(10)
+	cursor.execute ("DROP TABLE IF EXISTS filme")
+	cursor.execute ("""
+		CREATE TABLE filme
+		(
+   		cod_filme	INT UNSIGNED NOT NULL AUTO_INCREMENT,
+   		PRIMARY KEY (cod_filme),
+			cod_genero INT UNSIGNED NOT NULL,
+   		titulo	VARCHAR(20) NOT NULL,
+			quantidade int(10)
 	)
-      """)
-    print " filme... feito."
+	  """)
+	print " filme... feito."
 
 def dvd():
-    cursor.execute ("DROP TABLE IF EXISTS dvd")
-    cursor.execute ("""
-        CREATE TABLE dvd
-        (
-   	    cod_dvd    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-   	    PRIMARY KEY (cod_dvd),
-            cod_filme INT UNSIGNED NOT NULL
+	cursor.execute ("DROP TABLE IF EXISTS dvd")
+	cursor.execute ("""
+		CREATE TABLE dvd
+		(
+   		cod_dvd	INT UNSIGNED NOT NULL AUTO_INCREMENT,
+   		PRIMARY KEY (cod_dvd),
+			cod_filme INT UNSIGNED NOT NULL
 	)
-      """)
-    print " dvd... feito."
+	  """)
+	print " dvd... feito."
 
 def locados():
-    cursor.execute ("DROP TABLE IF EXISTS locados")
-    cursor.execute ("""
-        CREATE TABLE locados
-        (
-            idcod  INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            PRIMARY KEY (idcod),
-            cod_cliente INT UNSIGNED NOT NULL,
-   	    cod_dvd    INT UNSIGNED NOT NULL,
-            retirada DATETIME,
-            devolucao DATETIME Default NULL,
-            expire_date DATE,
-            status int(2) Default '0'
-	)
-      """)
-      print " locados... feito."
+	cursor.execute ("DROP TABLE IF EXISTS locados")
+	cursor.execute ("""
+		CREATE TABLE locados (
+		  idcod INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+		  cod_caixa INTEGER UNSIGNED NOT NULL,
+		  cod_dvd INTEGER UNSIGNED NOT NULL,
+		  cod_cliente INTEGER UNSIGNED NOT NULL,
+		  retirada DATETIME NULL,
+		  devolucao DATETIME NULL,
+		  expire_date DATE NULL,
+		  status_dvd INTEGER NULL,
+		  PRIMARY KEY(idcod),
+		  INDEX locados_FKIndex1(cod_cliente),
+		  INDEX locados_FKIndex2(cod_dvd),
+		  INDEX locados_FKIndex3(cod_caixa)
+		)
+	""")
+	print " locados... feito."
 
 def categoria():
 	cursor.execute ("DROP TABLE IF EXISTS categoria")
 	cursor.execute ("""
 		CREATE TABLE categoria (
 		  cod_categoria INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+		  cod_caixa_padrao INTEGER UNSIGNED NOT NULL,
 		  nome VARCHAR(30) NULL,
 		  cod_categoria_pai INTEGER UNSIGNED NULL,
-		  PRIMARY KEY(cod_categoria)
+		  PRIMARY KEY(cod_categoria),
+		  INDEX categoria_FKIndex1(cod_caixa_padrao)
 		)
 	""")
 	print " categoria... feito."
@@ -106,16 +129,16 @@ def produto():
 		  INDEX produto_FKIndex1(cod_categoria)
 		)
 	""")
-	print " pedido... feito."
+	print " produto... feito."
 
 def estoque():
 	cursor.execute ("DROP TABLE IF EXISTS estoque")
 	cursor.execute ("""
 		CREATE TABLE estoque (
 		  cod_produto INTEGER UNSIGNED NOT NULL,
-		  armazem VARCHAR(4) NULL,
-		  quantidade FLOAT(7,2) NULL DEFAULT 0,
-		  PRIMARY KEY(cod_produto),
+		  localiz VARCHAR(4) NOT NULL,
+		  quantidade FLOAT(8,3) NULL DEFAULT 0,
+		  PRIMARY KEY(cod_produto, localiz),
 		  INDEX estoque_FKIndex1(cod_produto)
 		)
 	""")
@@ -141,31 +164,35 @@ def itempedido():
 		CREATE TABLE itempedido (
 		  cod_pedido INTEGER UNSIGNED NOT NULL,
 		  item INTEGER UNSIGNED NOT NULL,
+		  cod_caixa INTEGER UNSIGNED NOT NULL,
+		  localiz VARCHAR(4) NOT NULL,
 		  cod_produto INTEGER UNSIGNED NOT NULL,
-		  quantidade FLOAT(7,3) NULL DEFAULT 1,
+		  quantidade FLOAT(8,3) NULL DEFAULT 1,
 		  preco_unit FLOAT(12,2) NULL,
 		  desconto FLOAT(12,2) NULL,
 		  total FLOAT(12,2) NULL,
 		  PRIMARY KEY(cod_pedido, item),
 		  INDEX itempedido_FKIndex1(cod_pedido),
-		  INDEX itempedido_FKIndex2(cod_produto)
+		  INDEX itempedido_FKIndex2(cod_produto, localiz),
+		  INDEX itempedido_FKIndex3(cod_caixa)
 		)
 	""")
 	print " itempedido... feito."
 
 if __name__ == '__main__':
-    connect()
-    clientes()
+	connect()
+	clientes()
+	caixa()
 
-    # Locadora
-    generodvd()
-    filme()
-    dvd()
-    locados()
+	# Locadora
+	generodvd()
+	filme()
+	dvd()
+	locados()
 
-    # Loja
-    categoria()
-    produto()
-    estoque()
-    pedido()
-    itempedido()
+	# Loja
+	categoria()
+	produto()
+	estoque()
+	pedido()
+	itempedido()
