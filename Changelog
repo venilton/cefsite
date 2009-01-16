@@ -1,3 +1,10 @@
+﻿-------------------------------------------------------------------------
+(16/01/09) augustocmen@yahoo.com.br
+-------------------------------------------------------------------------
+O objeto Modelo foi separado em mais de uma classe, cada uma representando
+uma tabela, cada uma com funções específicas. Desse modo, fica mais
+parecido e mais fácil de mudar para Django.
+O menu em main.py e Controle.py foram modificados também.
 -------------------------------------------------------------------------
 (11/01/09) marcos_venilton@yahoo.com.br
 -------------------------------------------------------------------------
