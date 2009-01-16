@@ -45,19 +45,19 @@ class Controle:
                 
         else:
             if editando == True:
-                self.modelo.update_cliente(cod, name)
+                self.modelo.clientes.update_item(cod, name)
                 self.notify_text = 'Cliente ' + name +' Editado com sucesso!'
             else:    
-                self.modelo.insert_cliente(name)
+                self.modelo.clientes.insert_item(name)
                 self.notify_text = 'Cliente ' + name +' cadastrado com sucesso!'
                 self.status = True
             
     def locate_clientes(self):
-        rows = self.modelo.select_all_clientes()
+        rows = self.modelo.clientes.select_all()
         return rows
     
     def listar_cliente(self,cod):
-        rows = self.modelo.select_cliente(cod)
+        rows = self.modelo.clientes.select_cliente(cod)
         return rows
     
     def alugar(self,cod_cliente,cod_dvd):
@@ -94,9 +94,9 @@ class Controle:
         
         dvds = self.listar_titulo_filme(cod_dvd)
         if dvds != ():  
-            locado = self.modelo.locate_locados(cod_dvd)
+            locado = self.modelo.locados.locate_locados(cod_dvd)
             if locado == ():
-                self.modelo.insert_locacao(cod_cliente, cod_dvd, dias)
+                self.modelo.locados.insert_locacao(cod_cliente, cod_dvd, dias)
                 self.notify_text = 'Locação realizada com sucesso!'
                 self.status = True
                 return
@@ -120,10 +120,10 @@ class Controle:
             self.status = False
             raise  EmBranco , 'Código deve ser preenchido'
         
-        cods = self.modelo.select_locados()
+        cods = self.modelo.locados.select_locados()
         for cod in cods:
             if (int(cod_dvd) == cod[1]):
-                self.modelo.insert_devolucao(cod[0])
+                self.modelo.locados.insert_devolucao(cod[0])
                 self.notify_text = 'Devolução do DvD cod = %s realizada com sucesso!'%(cod_dvd)
                 self.status = True
                 return
@@ -131,37 +131,37 @@ class Controle:
         self.status = False
         
     def cadastra_genero_dvd(self,descricao):
-        self.modelo.insert_generodvd(descricao)
+        self.modelo.generos.insert_item(descricao)
         return True
     
     def listar_genero_dvd(self):
-        rows = self.modelo.select_all_generodvd()
+        rows = self.modelo.generos.select_all()
         return rows
     
     def popular_combo_genero(self):
-        rows=self.modelo.select_all_generodvd()
+        rows=self.modelo.genero.select_all()
         return rows
     
     def cadastra_filme(self, genero_ativo, generos, titulo, quantidade):
         if genero_ativo >= 0:  
             genero = generos[genero_ativo][1]
-            cod_genero = self.modelo.select_generodvd(genero)
-            cod_filme = self.modelo.insert_filme(cod_genero[0][0], titulo, quantidade)
+            cod_genero = self.modelo.generos.select_genero_desc(genero)
+            cod_filme = self.modelo.filmes.insert_item(cod_genero[0][0], titulo, quantidade)
 
             for quant in range(quantidade):
-                self.modelo.insert_dvd(cod_filme[0])
+                self.modelo.dvds.insert_item(cod_filme[0])
             return True
         else:
             return False
         
     def listar_locados(self):
-        rows = self.modelo.select_locados()
+        rows = self.modelo.locados.select_locados()
         return rows
     
     def listar_titulo_filme(self,codigo):
-        rows = self.modelo.select_dvd(codigo)
+        rows = self.modelo.dvds.select_dvd(codigo)
         return rows
     
     def listar_atrasados(self):
-        rows = self.modelo.select_locados_atrasados()
+        rows = self.modelo.locados.select_locados_atrasados()
         return rows

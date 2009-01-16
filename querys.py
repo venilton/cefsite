@@ -146,7 +146,10 @@ class Cliente(Tabela):
 		return self.update(campos, {'cod_cliente': cod_cliente})
 
 	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM %s WHERE nome like '%%%s%%'" % (self.nome_tabela, name))
+		return self.runQuery("SELECT * FROM clientes WHERE nome like '%%%s%%'" % (name))
+
+	def select_cliente(self, cod):
+		return self.runQuery("SELECT * FROM clientes WHERE cod_cliente=%s", [cod])
 
 class Caixa(Tabela):
 	def __init__(self, bd, cursor, nome_tabela='caixa'):
@@ -169,7 +172,7 @@ class Caixa(Tabela):
 		return self.update(campos, {'cod_caixa': cod_caixa })
 
 	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM %s WHERE nome like '%%%s%%'" % (self.nome_tabela, name))
+		return self.runQuery("SELECT * FROM caixa WHERE nome like '%%%s%%'" % (name))
 
 class Filme(Tabela):
 	def __init__(self, bd, cursor, nome_tabela='filme'):
@@ -194,7 +197,7 @@ class Filme(Tabela):
 		return self.update(campos, {'cod_filme': cod_filme})
 
 	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM %s WHERE nome like '%%%s%%'" % (self.nome_tabela, name))
+		return self.runQuery("SELECT * FROM filme WHERE nome like '%%%s%%'" % (name))
 
 class Genero(Tabela):
 	def __init__(self, bd, cursor, nome_tabela='generodvd'):
@@ -215,7 +218,13 @@ class Genero(Tabela):
 		return self.update(campos, {'cod_genero': cod_genero })
 
 	def locate_item(self, descricao):
-		return self.runQuery("SELECT * FROM %s WHERE descricao like '%%%s%%'" % (self.nome_tabela, descricao))
+		return self.runQuery("SELECT * FROM generodvd WHERE descricao like '%%%s%%'" % (descricao))
+
+	def select_genero(self, cod):
+		return self.runQuery("SELECT * FROM generodvd WHERE cod_genero=%s", [cod])
+
+	def select_genero_desc(self, descricao):
+		return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
 
 class DVD(Tabela):
 	def __init__(self, bd, cursor, nome_tabela='dvd'):
@@ -235,26 +244,29 @@ class DVD(Tabela):
 
 		return self.update(campos, {'cod_dvd': cod_dvd })
 
+	def select_dvd(self, cod):
+		return self.runQuery("SELECT d.cod_dvd, f.titulo FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
+
 class Locacao(Tabela):
 	def __init__(self, bd, cursor, nome_tabela='locados'):
 		Tabela.__init__(self, bd, cursor, nome_tabela)
 		self.all_fields = ['idcod', 'cod_cliente', 'cod_dvd', 'retirada', 'devolucao', 'expire_date', 'status_dvd']
 
 	def select_locados(self):
-		return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM " + self.nome_tabela + " WHERE status_dvd = '0'")
+		return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0'")
 
 	def select_locados_atrasados(self):
 		return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0' AND expire_date < CURDATE()")
 
 	def locate_locados(self, cod_dvd):
-		return self.runQuery("SELECT idcod FROM " + self.nome_tabela + " WHERE status_dvd = '0' AND cod_dvd= %s", (cod_dvd))
+		return self.runQuery("SELECT idcod FROM locados WHERE status_dvd = '0' AND cod_dvd= %s", (cod_dvd))
 
 	def insert_locacao(self, cod_cliente, cod_dvd, dias):
-		runSql('INSERT INTO ' + self.nome_tabela + ' (cod_cliente, cod_dvd, retirada, expire_date) VALUES (%s, %s, NOW(), DATE_ADD(CURDATE( ), INTERVAL %s DAY))', (cod_cliente, cod_dvd, dias))
+		runSql('INSERT INTO locados (cod_cliente, cod_dvd, retirada, expire_date) VALUES (%s, %s, NOW(), DATE_ADD(CURDATE( ), INTERVAL %s DAY))', (cod_cliente, cod_dvd, dias))
 		return self.lastInsertId()
 
 	def insert_devolucao(self, idcod):
-		return self.runSql("UPDATE " + self.nome_tabela + " SET status_dvd = %s, devolucao = NOW() where idcod=%s", ('1', idcod))
+		return self.runSql("UPDATE locados SET status_dvd = %s, devolucao = NOW() where idcod=%s", ('1', idcod))
 
 	def update_item(self, cod_dvd, cod_filme):
 		campos = {}
@@ -285,7 +297,7 @@ class Categoria(Tabela):
 		return self.update(campos, {'cod_categoria': cod_categoria })
 
 	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM %s WHERE nome like '%%%s%%'" % (self.nome_tabela, name))
+		return self.runQuery("SELECT * FROM categoria WHERE nome like '%%%s%%'" % (name))
 
 class Produto(Tabela):
 	def __init__(self, bd, cursor, nome_tabela='produto'):
@@ -314,7 +326,7 @@ class Produto(Tabela):
 		return self.update(campos, {'cod_produto': cod_produto })
 
 	def locate_item(self, nome):
-		return self.runQuery("SELECT * FROM %s WHERE nome like '%%%s%%'" % (self.nome_tabela, nome))
+		return self.runQuery("SELECT * FROM produto WHERE nome like '%%%s%%'" % (nome))
 
 class EstoqueError(Exception): pass
 
@@ -352,8 +364,7 @@ class Estoque(Tabela):
 			0 caso não haja nenhum item no estoque ou None caso haja registro do produto no estoque. """
 		params = [cod_produto]
 
-		sql1 = "SELECT sum(quantidade) FROM %s" % self.nome_tabela
-		sql1 += " WHERE cod_produto=%s"
+		sql1 = "SELECT sum(quantidade) FROM estoque WHERE cod_produto=%s"
 		if localiz:
 			sql1 += " AND localiz=%s"
 			params.append(localiz)
