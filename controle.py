@@ -17,6 +17,8 @@ class Controle:
     def __init__(self):
         self.status = False
         self.notify_text = ''
+        self.cliente_encontrado = False
+        self.dadoscliente = [0][0]
     
     def set_modelo(self, modelo):
         self.modelo = modelo
@@ -29,14 +31,25 @@ class Controle:
         
     def logoff(self):        
         self.interface.w_login.show()
-        
+     
+    def get_notify_label(self, notify_label):
+            self.notify_label = notify_label
+            
     def notify(self):
         if self.status == True:
             self.status = False
             return True , self.notify_text
         else:
+            self.notify_label.set_text(self.notify_text)
             return False, self.notify_text
-    
+            
+    def cliente_localizado(self):
+        if self.cliente_encontrado == True:
+            self.cliente_encontrado = False
+            return True , self.dadoscliente
+        else:
+            return False, self.dadoscliente
+        
     def cadastra_cliente(self, cod, name, editando):
         if name=='':
             self.notify_text = 'ERRO : Campo NOME precisa ser preenchido!'

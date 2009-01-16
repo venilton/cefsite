@@ -78,7 +78,7 @@ def locados():
             status int(2) Default '0'
 	)
       """)
-      print " locados... feito."
+    print " locados... feito."
 
 def categoria():
 	cursor.execute ("DROP TABLE IF EXISTS categoria")

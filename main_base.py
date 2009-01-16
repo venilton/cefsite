@@ -3,7 +3,27 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-
+        
+def notify_area(controle):
+    amarelo_pastel = gtk.gdk.color_parse("#e4e3a9")
+    event_box = gtk.EventBox()
+    hboxnotify = gtk.HBox(False)
+    event_box.add(hboxnotify)
+    
+    notify = gtk.Label()
+    hboxnotify.pack_start(notify, True, True, 2)
+    controle.get_notify_label(notify)
+    
+    close_button = gtk.Button()
+    close_button.connect("clicked",lambda w: hboxnotify.hide())
+    close = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+    close_button.add(close)
+    close_button.set_relief(gtk.RELIEF_NONE)
+    hboxnotify.pack_start(close_button, False, True, 2)
+    
+    event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
+    return event_box
+    
 def iconMenuItem(title, stock):
     mItem = gtk.ImageMenuItem(title)
     im = gtk.Image()
@@ -13,7 +33,79 @@ def iconMenuItem(title, stock):
     except AttributeError:
         pass
     return mItem
+    
+def localizar_cliente(self, window, controle):
+    w_localiza_clientes = gtk.Dialog("CEF SHOP - Localizar Cliente", window, gtk.DIALOG_MODAL)
+    w_localiza_clientes.set_position(gtk.WIN_POS_CENTER)
+    w_localiza_clientes.set_size_request(480,220)
+    w_localiza_clientes.connect("destroy", close_localizar_cliente)
+#------Lista
+    vpaned = gtk.VPaned()
+    w_localiza_clientes.vbox.add(vpaned)
 
+    frame_locados = gtk.Frame("Clientes")
+    vpaned.add(frame_locados)
+
+    liststore = create_list_localizar_cliente(controle, w_localiza_clientes)
+    frame_locados.add(liststore)
+#-------Botoes     
+    button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+    button_cancel.connect("clicked", close_localizar_cliente, w_localiza_clientes)
+    #button_ok = gtk.Button(stock=gtk.STOCK_OK)
+    #button_ok.connect("clicked", self.localizar_selecionado)
+
+    bbox = gtk.HButtonBox ()
+    bbox.set_layout(gtk.BUTTONBOX_END)
+    w_localiza_clientes.action_area.pack_start(bbox, False, True, 0)
+    
+    bbox.add(button_cancel)
+    button_cancel.set_flags(gtk.CAN_DEFAULT)
+
+    #bbox.add(button_ok)
+    button_cancel.grab_default()
+
+    w_localiza_clientes.show_all()
+    w_localiza_clientes.show()
+    
+def create_list_localizar_cliente(controle, w_localiza_clientes):
+    scrolled_window = gtk.ScrolledWindow()
+    scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+    lista = gtk.ListStore(str, str)
+    tree_view = gtk.TreeView(lista)
+    scrolled_window.add_with_viewport (tree_view)
+
+    clientes = controle.locate_clientes()
+    for cliente in clientes:
+        codigo = cliente[0]
+        nome = cliente[1]
+        lista.append([codigo, nome])
+       
+    cell1 = gtk.CellRendererText()
+    column1 = gtk.TreeViewColumn("Codigo", cell1, text=0)
+    
+    cell2 = gtk.CellRendererText()
+    column2 = gtk.TreeViewColumn("Nome", cell2, text=1)
+    
+    tree_view.append_column(column1)
+    tree_view.append_column(column2)
+    
+    tree_view.connect("row_activated",  localizar_cliente_selecionado, lista, controle, w_localiza_clientes)
+    return scrolled_window
+    
+def close_localizar_cliente(widget, w_localiza_clientes):
+    w_localiza_clientes.hide()
+
+def localizar_cliente_selecionado( treeview, path, view_column, lista, controle, w_localiza_clientes):
+    treeiter = lista.get_iter(path)
+    value = int(lista.get_value(treeiter, 0))
+    dadoscliente = controle.listar_cliente(value)
+    #get_clientes_campos(dadoscliente)
+    controle.cliente_encontrado = True
+    controle.dadoscliente = dadoscliente
+    w_localiza_clientes.hide()
+        
+    
 class Login:
    
     def createMenus(self, vbox):
@@ -113,13 +205,13 @@ class Loja:
         #show = status
         if self.show_notify == True:
             self.notify.set_text(self.notify_text)
-            self.hboxnotify.show()
+            self.event_box.show()
         else:
-            self.hboxnotify.hide()
+            self.event_box.hide()
     
     def close_notification(self, widget):
         self.show_notify == False
-        self.hboxnotify.hide()
+        self.event_box.hide()
 
     def open_cad_clientes (self, widget):
         Cadastro_clientes(self.controle)
@@ -218,32 +310,27 @@ class Loja:
 
 #-------area de notificacao
         amarelo_pastel = gtk.gdk.color_parse("#e4e3a9")
-        self.hboxnotify = gtk.HBox(False)
-        vbox_main.pack_start(self.hboxnotify, False, True, 2)
-        event_box = gtk.EventBox()
-
-        self.hboxnotify.pack_start(event_box, True, True, 2)        
-        
-        close_button = gtk.Button()
-        close_button.connect("clicked", self.close_notification)
-        close = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-        close_button.add(close)
-        #close_button.set_relief(gtk.RELIEF_NONE)
-        close_button.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
-
-        self.hboxnotify.pack_start(close_button, False, True, 2)
+        self.event_box = gtk.EventBox()
+        hboxnotify = gtk.HBox(False)
+        self.event_box.add(hboxnotify)
         
         self.notify = gtk.Label()
-        event_box.add(self.notify)
-
-        event_box.realize()
-        #event_box.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
-        event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
-
+        hboxnotify.pack_start(self.notify, True, True, 2)
+        controle.get_notify_label(self.notify)
+        
+        close_button = gtk.Button()
+        close_button.connect("clicked",self.close_notification)
+        close = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+        close_button.add(close)
+        close_button.set_relief(gtk.RELIEF_NONE)
+        hboxnotify.pack_start(close_button, False, True, 2)
+        
+        self.event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
+        vbox_main.pack_start(self.event_box,False, True, 4)
 #-------Mostra tudo
 
         self.w_loja.show_all()
-        self.hboxnotify.hide()
+        self.event_box.hide()
         self.w_loja.show()
         
 
@@ -253,9 +340,6 @@ class Cadastro_clientes:
     def set_controle(self, controle):
         self.controle = controle
         
-    def close_notification(self, widget):
-        self.hboxnotify.hide()
-        
     def close(self,w):
         Loja.show_notify = False
         self.w_cad_clientes.destroy()
@@ -263,15 +347,14 @@ class Cadastro_clientes:
     def sensitive(self,is_sensitive):
         self.entry_nome.set_sensitive(is_sensitive)
         
-    def close_localizar(self,w):
-        self.w_localiza_clientes.hide()
-        
-    def get_campos(self, dadoscliente):
-        self.cod = dadoscliente[0][0]
-        self.entry_nome.set_text(dadoscliente[0][1])
-        self.is_sensitive = False
-        self.sensitive(self.is_sensitive)
-        self.tb_editar.set_sensitive(True)
+    def localizado(self, widget, focus):
+        dadoscliente = self.controle.cliente_localizado()
+        if dadoscliente[0] == True:
+            self.cod = dadoscliente[1][0][0]
+            self.entry_nome.set_text(dadoscliente[1][0][1])
+            self.is_sensitive = False
+            self.sensitive(self.is_sensitive)
+            self.tb_editar.set_sensitive(True)
         
     def novo(self, widget):
         self.is_sensitive = True
@@ -285,76 +368,6 @@ class Cadastro_clientes:
         self.is_sensitive = True
         self.sensitive(self.is_sensitive)
         self.editando = True
-        
-    def localizar_selecionado(self, treeview, path, view_column):
-        treeiter = self.lista.get_iter(path)
-        value = int(self.lista.get_value(treeiter, 0))
-        dadoscliente = self.controle.listar_cliente(value)
-        self.get_campos(dadoscliente)
-        self.w_localiza_clientes.hide()
-        
-    def localizar(self, widget):
-        self.w_localiza_clientes = gtk.Dialog()
-        self.w_localiza_clientes.set_position(gtk.WIN_POS_CENTER)
-        self.w_localiza_clientes.set_title("CEF SHOP - Localizar Cliente")
-        self.w_localiza_clientes.set_size_request(480,220)
-        self.w_localiza_clientes.connect("destroy", self.close_localizar)
-        
-#------Lista
-        vpaned = gtk.VPaned()
-        self.w_localiza_clientes.vbox.add(vpaned)
-
-        frame_locados = gtk.Frame("Clientes")
-        vpaned.add(frame_locados)
-
-        liststore = self.create_list_localizar()
-        frame_locados.add(liststore)
-
-#-------Botoes     
-
-        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
-        button_cancel.connect("clicked", self.close_localizar)
-        #button_ok = gtk.Button(stock=gtk.STOCK_OK)
-        #button_ok.connect("clicked", self.localizar_selecionado)
-
-        bbox = gtk.HButtonBox ()
-        bbox.set_layout(gtk.BUTTONBOX_END)
-        self.w_localiza_clientes.action_area.pack_start(bbox, False, True, 0)
-        
-        bbox.add(button_cancel)
-        button_cancel.set_flags(gtk.CAN_DEFAULT)
-
-        #bbox.add(button_ok)
-        button_cancel.grab_default()
-
-        self.w_localiza_clientes.show_all()
-        self.w_localiza_clientes.show()
-        
-    def create_list_localizar(self):
-        scrolled_window = gtk.ScrolledWindow()
-        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-
-        self.lista = gtk.ListStore(str, str)
-        tree_view = gtk.TreeView(self.lista)
-        scrolled_window.add_with_viewport (tree_view)
-    
-        clientes = self.controle.locate_clientes()
-        for cliente in clientes:
-            codigo = cliente[0]
-            nome = cliente[1]
-            self.lista.append([codigo, nome])
-           
-        cell1 = gtk.CellRendererText()
-        column1 = gtk.TreeViewColumn("Codigo", cell1, text=0)
-        
-        cell2 = gtk.CellRendererText()
-        column2 = gtk.TreeViewColumn("Nome", cell2, text=1)
-        
-        tree_view.append_column(column1)
-        tree_view.append_column(column2)
-        
-        tree_view.connect("row_activated",  self.localizar_selecionado)
-        return scrolled_window
         
     def excluir(self, widget):
         pass
@@ -382,8 +395,7 @@ class Cadastro_clientes:
             Loja.notify_text = status[1]
             self.w_cad_clientes.hide()
         else:
-            self.notify.set_text(status[1])
-            self.hboxnotify.show()
+            self.notify_box.show()
             
     def __init__(self,controle):
         self.w_cad_clientes = gtk.Dialog()
@@ -392,9 +404,12 @@ class Cadastro_clientes:
         #self.w_cad_clientes.set_border_width(8)
         self.w_cad_clientes.set_title("CEF SHOP - Cadastro de Clientes")
         self.w_cad_clientes.connect("destroy", self.close)
+        self.w_cad_clientes.connect("focus_in_event", self.localizado)
         self.controle = controle
         self.is_sensitive = True
         self.editando = False
+        self.cliente_selecionado = False
+        self.dadoscliente = None
 
 #------Toolbar
         toolbar = gtk.Toolbar()
@@ -408,7 +423,7 @@ class Cadastro_clientes:
 
         tb_procura = gtk.ToolButton("Localizar")
         tb_procura.set_stock_id(gtk.STOCK_FIND)
-        tb_procura.connect("clicked", self.localizar)
+        tb_procura.connect("clicked", localizar_cliente, self.w_cad_clientes, self.controle)
         toolbar.insert(tb_procura, -1)
         
         self.tb_editar = gtk.ToolButton("Editar")
@@ -444,35 +459,14 @@ class Cadastro_clientes:
         self.entry_cpf = gtk.Entry(0)
         self.entry_cpf.set_size_request(200,28)
         f_entry.put(self.entry_cpf, 10, 40)
-                  
+    
         vbox_labelentry.pack_start(f_label, False, True, 4)
         vbox_labelentry.pack_start(f_entry, False, True, 4)
 
 #-------area de notificacao
-        amarelo_pastel = gtk.gdk.color_parse("#e4e3a9")
-        self.hboxnotify = gtk.HBox(False)
-        #vbox_main.pack_start(self.hboxnotify, False, True, 2)
-        self.w_cad_clientes.vbox.pack_start(self.hboxnotify,False, True, 4)
-        event_box = gtk.EventBox()
-
-        self.hboxnotify.pack_start(event_box, True, True, 2)        
+        self.notify_box = notify_area(self.controle)
+        self.w_cad_clientes.vbox.pack_start(self.notify_box,False, True, 4)
         
-        close_button = gtk.Button()
-        close_button.connect("clicked", self.close_notification)
-        close = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-        close_button.add(close)
-        #close_button.set_relief(gtk.RELIEF_NONE)
-        close_button.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
-
-        self.hboxnotify.pack_start(close_button, False, True, 2)
-        
-        self.notify = gtk.Label()
-        event_box.add(self.notify)
-
-        event_box.realize()
-        #event_box.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
-        event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
-
 #-------Botoes
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
@@ -491,7 +485,7 @@ class Cadastro_clientes:
           
 #------Mostra tudo
         self.w_cad_clientes.show_all()
-        self.hboxnotify.hide()
+        self.notify_box.hide()
         self.w_cad_clientes.show()
 #-----------------------------------------------------
 
@@ -505,6 +499,14 @@ class Locar:
     def close(self,w):
         Loja.show_notify = False
         self.w_locar.destroy()
+    def localizado(self, widget, focus):
+        dadoscliente = self.controle.cliente_localizado()
+        if dadoscliente[0] == True:
+            self.entry_cod_cliente.set_text(str(dadoscliente[1][0][0]))
+            self.entry_nome_cliente.set_text(dadoscliente[1][0][1])
+            #self.is_sensitive = False
+            #self.sensitive(self.is_sensitive)
+            #self.tb_editar.set_sensitive(True)
 
     def cadastra (self,widget, entry_cliente, entry_dvd):
         cod_cliente = entry_cliente.get_text()
@@ -521,76 +523,154 @@ class Locar:
         else:
             self.notify.set_text(status[1])
             self.hboxnotify.show()    
+     
+    def create_list(self):
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+        lista = gtk.ListStore(str, str, str)
+        tree_view = gtk.TreeView(lista)
+        scrolled_window.add_with_viewport (tree_view)
+    
+        #locados = self.controle.listar_locados()
+        #for locado in locados:
+           # titulo = self.controle.listar_titulo_filme(locado[1])
+            #codvd = str(locado[1]) +' - '+ str(titulo[0][1])
+            #codcliente = str(locado[2]) +' - '+ str(locado[3])
+            #lista.append([codvd, codcliente, locado[4], locado[5]])
+           
+        cell1 = gtk.CellRendererText()
+        column1 = gtk.TreeViewColumn("Codigo - Dvd", cell1, text=0)
+        
+        cell2 = gtk.CellRendererText()
+        column2 = gtk.TreeViewColumn("Titulo", cell2, text=1)
+        
+        cell3 = gtk.CellRendererText()
+        column3 = gtk.TreeViewColumn("Devolver em", cell3, text=2)
+        
+        tree_view.append_column(column1)
+        tree_view.append_column(column2)
+        tree_view.append_column(column3)
+        
+        return scrolled_window
+    def enter_cod_cliente(self):
+        cod_cliente = entry_cod_cliente.get_text()
+        self.controle.listar_cliente(cod_cliente)
         
     def __init__(self,controle):
         self.w_locar = gtk.Dialog()
         self.w_locar.set_position(gtk.WIN_POS_CENTER)
         self.w_locar.connect("destroy", self.close)
+        self.w_locar.connect("focus_in_event", self.localizado)
         self.w_locar.set_title("CEF SHOP - Locar")
-        self.w_locar.set_size_request(450,200)
+        self.w_locar.set_size_request(650,400)
         self.w_locar.set_border_width(8)
         self.controle = controle
-
-#-------Elementos       
-        label_cliente = gtk.Label("Codigo do Cliente :")
-        entry_cliente = gtk.Entry(0)
-
-        label_dvd = gtk.Label("Codigo do DvD :")
-        entry_dvd = gtk.Entry(0)
      
 #------Divisao v principal
         vbox_main = gtk.VBox(False, 2)
         self.w_locar.vbox.add(vbox_main)   
+
+#------Frame Clientes
+        frame_cliente = gtk.Frame("Cliente")
+        vbox_main.pack_start(frame_cliente, False, True, 2)
         
-#------Frame cadastra
-        frame_dados = gtk.Frame("Locação")
-        vbox_main.pack_start(frame_dados, False, True, 2)
-      
-        vbox_labelentry = gtk.HBox(False, 4)
-        vbox_labelentry.set_border_width(4)
-        frame_dados.add(vbox_labelentry)
+        hbox_cliente = gtk.HBox(False, 2)
+        hbox_cliente.set_border_width(2)
+        frame_cliente.add(hbox_cliente)
         
-        vbox_label = gtk.VBox(False, 4)
-        vbox_labelentry.pack_start(vbox_label, False, True, 2)
-       
-        vbox_entry = gtk.VBox(False, 4)
-        vbox_labelentry.pack_start(vbox_entry, True, True, 2)
+        f_cliente = gtk.Fixed()
+    
+        label_cod_cliente = gtk.Label("Codigo :")
+        f_cliente.put(label_cod_cliente, 2, 8)
+        
+        self.entry_cod_cliente = gtk.Entry(0)        
+        self.entry_cod_cliente.set_size_request(60,28)
+        #self.entry_cod_cliente.connect("activate", localizar_cliente, self.w_locar)
+        f_cliente.put(self.entry_cod_cliente,60, 4)
 
-        vbox_label.pack_start(label_cliente, False, True, 8)
-        vbox_entry.pack_start(entry_cliente, False, True, 2)
+        self.entry_nome_cliente = gtk.Entry(0)        
+        self.entry_nome_cliente.set_size_request(400,28)
+        f_cliente.put(self.entry_nome_cliente,122, 4)
+        
+        button_localizar_cliente = gtk.Button(stock=gtk.STOCK_FIND)
+        button_localizar_cliente.connect("clicked", localizar_cliente, self.w_locar, self.controle)
+        f_cliente.put(button_localizar_cliente,524, 0)
+    
+        hbox_cliente.pack_start(f_cliente, False, True, 4)
 
-        vbox_label.pack_start(label_dvd, False, True, 8)
-        vbox_entry.pack_start(entry_dvd, False, True, 2)
+#---divisao h
+        hbox_body = gtk.HBox(False, 2)
+        vbox_main.pack_start(hbox_body, True, True, 2)
+        
+#------framecod dvds
 
+        f_dvd = gtk.Fixed()
+        frame_dvds = gtk.Frame("DvDs")
+        hbox_body.pack_start(frame_dvds, False, True, 2)
+        
+        vbox_dvd = gtk.VBox(False, 2)
+        vbox_dvd.set_border_width(2)
+        frame_dvds.add(vbox_dvd)
+        
+        label_cod_dvd = gtk.Label("Codigo :")
+        f_dvd.put(label_cod_dvd, 2, 8)
+        entry_cod_dvd = gtk.Entry(0)
+        entry_cod_dvd.set_size_request(60,28)
+        f_dvd.put(entry_cod_dvd, 60, 4)
+        
+        vbox_dvd.pack_start(f_dvd, False, True, 4)
+
+        button_remover = gtk.Button(stock=gtk.STOCK_REMOVE)
+        #button_cancel.connect("clicked", self.close)
+        button_adicionar = gtk.Button(stock=gtk.STOCK_ADD)
+        #button_ok.connect("clicked", self.cadastra, entry_cod_cliente, entry_cod_dvd)
+
+        bbox = gtk.VButtonBox ()
+        bbox.set_layout(gtk.BUTTONBOX_START)
+        vbox_dvd.pack_start(bbox, False, True, 4)
+        
+        bbox.add(button_adicionar)
+        bbox.add(button_remover)
+
+#------lista de filmes
+        vpaned = gtk.VPaned()
+        hbox_body.pack_start(vpaned, True, True, 2)
+        
+        frame_filmes = gtk.Frame("Lista de Locações")
+        vpaned.add(frame_filmes)
+
+        liststore = self.create_list()
+        frame_filmes.add(liststore)
+        
 #-------area de notificacao
         amarelo_pastel = gtk.gdk.color_parse("#e4e3a9")
-        self.hboxnotify = gtk.HBox(False)
-        vbox_main.pack_start(self.hboxnotify, False, True, 2)
         event_box = gtk.EventBox()
-
-        self.hboxnotify.pack_start(event_box, True, True, 2)        
+        self.hboxnotify = gtk.HBox(False)
+        event_box.add(self.hboxnotify)
+        
+        self.notify = gtk.Label()
+        self.hboxnotify.pack_start(self.notify, True, True, 2)
         
         close_button = gtk.Button()
         close_button.connect("clicked", self.close_notification)
         close = gtk.image_new_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
         close_button.add(close)
-        #close_button.set_relief(gtk.RELIEF_NONE)
-        close_button.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
-
+        close_button.set_relief(gtk.RELIEF_NONE)
         self.hboxnotify.pack_start(close_button, False, True, 2)
         
-        self.notify = gtk.Label()
-        event_box.add(self.notify)
-
-        event_box.realize()
+        #close_button.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
+        #event_box.realize()
         #event_box.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
-        event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
         
+        event_box.modify_bg(gtk.STATE_NORMAL, amarelo_pastel)
+        vbox_main.pack_start(event_box, False, True, 2)
+
 #-------Botoes     
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
-        button_ok.connect("clicked", self.cadastra, entry_cliente, entry_dvd)
+        button_ok.connect("clicked", self.cadastra, self.entry_cod_cliente, entry_cod_dvd)
 
         bbox = gtk.HButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_END)
@@ -630,7 +710,7 @@ class Devolver:
             self.w_devolver.hide()
         else:
             self.notify.set_text(status[1])
-            self.hboxnotify.show()  
+            self.hboxnotify.show()
             
     def __init__(self,controle):
         self.w_devolver = gtk.Dialog()
@@ -648,6 +728,7 @@ class Devolver:
 #------Divisao v principal
         vbox_main = gtk.VBox(False, 2)
         self.w_devolver.vbox.add(vbox_main)      
+        
 #------Frame cadastra
         frame_dados = gtk.Frame("Devolução")
         vbox_main.pack_start(frame_dados, False, True, 2)
@@ -664,6 +745,8 @@ class Devolver:
 
         vbox_label.pack_start(label_dvd, False, True, 8)
         vbox_entry.pack_start(entry_dvd, False, True, 2)
+        
+
         
 #-------area de notificacao
         amarelo_pastel = gtk.gdk.color_parse("#e4e3a9")
@@ -1142,7 +1225,6 @@ class Atrasados:
         self.w_atrasados.set_border_width(8)
         self.controle = controle
 
-  
 #------Lista
         vpaned = gtk.VPaned()
         self.w_atrasados.vbox.add(vpaned)
@@ -1164,7 +1246,6 @@ class Atrasados:
         
         bbox.add(button_close)
         button_close.set_flags(gtk.CAN_DEFAULT)
-
 
         self.w_atrasados.show_all()
         self.w_atrasados.show()
