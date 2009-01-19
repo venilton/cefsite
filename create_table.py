@@ -1,5 +1,6 @@
 ﻿import sys
 import MySQLdb
+import dblogin
 
 def connect():
 
@@ -93,7 +94,7 @@ def locados():
 		  retirada DATETIME NULL,
 		  devolucao DATETIME NULL,
 		  expire_date DATE NULL,
-		  status_dvd INTEGER NULL,
+		  status_dvd INTEGER  Default '0',
 		  PRIMARY KEY(idcod),
 		  INDEX locados_FKIndex1(cod_cliente),
 		  INDEX locados_FKIndex2(cod_dvd),

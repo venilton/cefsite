@@ -10,7 +10,7 @@ class TestesCadastroClientes(unittest.TestCase):
     
     def testCamposEmBranco(self):
         """Cadastro de Clientes Campo nome nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.cadastra_cliente, "", "", "")
+        self.assertRaises(controle.EmBranco, self.metodo.cadastra_cliente, "", "", "", "", "", "", "", "", "", "")
         
 class TestesLocacao(unittest.TestCase):
     """    Testes Locacao    """
@@ -18,19 +18,19 @@ class TestesLocacao(unittest.TestCase):
     
     def testCodDVDEmBranco(self):
         """Locacao Campo Codigo DVD nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.alugar, "1", "", "1")
+        self.assertRaises(controle.EmBranco, self.metodo.alugar, "1", "", True)
     
     def testCodClienteEmBranco(self):
         """Locacao Campo Codigo Cliente nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.alugar, "","1","1")
+        self.assertRaises(controle.EmBranco, self.metodo.alugar, "","1", True)
     
     def testLetrasNoCodigoDVD(self):
         """Locacao Campo Codigo DVD nao deve conter letras"""
-        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "1","a","1")
+        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "1","a", True)
     
     def testLetrasNoCodigoCliente(self):
         """Locacao Campo Codigo Cliente nao deve conter letras"""
-        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "a","1","1")
+        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "a","1", True)
         
 class TestesDevolucao(unittest.TestCase):
     """    Testes Devolucao    """

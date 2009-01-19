@@ -127,6 +127,7 @@ class Cliente(Tabela):
 		if celular is not None:		campos['celular'] = celular
 		if endereco is not None:	campos['endereco'] = endereco
 		if bairro is not None:		campos['bairro'] = bairro
+		if cidade is not None:		campos['cidade'] = cidade
 		if estado is not None:		campos['estado'] = estado
 		if cep is not None:			campos['cep'] = cep
 
@@ -140,10 +141,12 @@ class Cliente(Tabela):
 		if celular is not None:		campos['celular'] = celular
 		if endereco is not None:	campos['endereco'] = endereco
 		if bairro is not None:		campos['bairro'] = bairro
+		if cidade is not None:		campos['cidade'] = cidade
 		if estado is not None:		campos['estado'] = estado
 		if cep is not None:			campos['cep'] = cep
 
 		return self.update(campos, {'cod_cliente': cod_cliente})
+
 
 	def locate_item(self, name):
 		return self.runQuery("SELECT * FROM clientes WHERE nome like '%%%s%%'" % (name))
@@ -222,7 +225,7 @@ class Genero(Tabela):
 
 	def select_genero(self, cod):
 		return self.runQuery("SELECT * FROM generodvd WHERE cod_genero=%s", [cod])
-
+	
 	def select_genero_desc(self, descricao):
 		return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
 
@@ -261,8 +264,8 @@ class Locacao(Tabela):
 	def locate_locados(self, cod_dvd):
 		return self.runQuery("SELECT idcod FROM locados WHERE status_dvd = '0' AND cod_dvd= %s", (cod_dvd))
 
-	def insert_locacao(self, cod_cliente, cod_dvd, dias):
-		runSql('INSERT INTO locados (cod_cliente, cod_dvd, retirada, expire_date) VALUES (%s, %s, NOW(), DATE_ADD(CURDATE( ), INTERVAL %s DAY))', (cod_cliente, cod_dvd, dias))
+	def insert_locacao(self, cod_caixa, cod_cliente, cod_dvd, dias):
+		self.runSql('INSERT INTO locados (cod_caixa, cod_cliente, cod_dvd, retirada, expire_date) VALUES (%s, %s, %s, NOW(), DATE_ADD(CURDATE( ), INTERVAL %s DAY))', (cod_caixa, cod_cliente, cod_dvd, dias))
 		return self.lastInsertId()
 
 	def insert_devolucao(self, idcod):

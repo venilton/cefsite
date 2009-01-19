@@ -16,6 +16,7 @@ class CodigoInvalido(ControleError):pass
 class Controle:
     def __init__(self):
         self.status = False
+        self.main_status = False
         self.notify_text = ''
         self.cliente_encontrado = False
         self.dadoscliente = [0][0]
@@ -34,15 +35,36 @@ class Controle:
      
     def get_notify_label(self, notify_label):
             self.notify_label = notify_label
-            
+    
+    def get_main_notify_label(self, notify_label):
+            self.main_notify_label = notify_label
+    
     def notify(self):
         if self.status == True:
+            self.notify_label.set_text(self.notify_text)
             self.status = False
-            return True , self.notify_text
+            return True
         else:
             self.notify_label.set_text(self.notify_text)
-            return False, self.notify_text
+            return False
+
+    def main_notify(self):
+        if self.main_status == True:
+            self.main_notify_label.set_text(self.notify_text)
+            self.main_status = False
+            return True
+        else:
+            return False
             
+    def toInt(self, cod):
+        try:
+            cod = int(cod)
+        except:
+            self.notify_text = 'ERRO : campo CÓDIGO deve conter apenas números!'
+            self.status = False
+            raise CodigoInvalido , 'Código deve conter apenas números'
+        return cod
+        
     def cliente_localizado(self):
         if self.cliente_encontrado == True:
             self.cliente_encontrado = False
@@ -50,84 +72,77 @@ class Controle:
         else:
             return False, self.dadoscliente
         
-    def cadastra_cliente(self, cod, name, editando):
-        if name=='':
+    def cadastra_cliente(self, cod_cliente, name, telefone, celular, endereco, bairro, cidade, estado, cep, editando):
+        if name == '':
             self.notify_text = 'ERRO : Campo NOME precisa ser preenchido!'
-            self.status = False
+            self.status = True
             raise  EmBranco , 'Nome deve ser preenchido'
-                
-        else:
-            if editando == True:
-                self.modelo.clientes.update_item(cod, name)
-                self.notify_text = 'Cliente ' + name +' Editado com sucesso!'
-            else:    
-                self.modelo.clientes.insert_item(name)
-                self.notify_text = 'Cliente ' + name +' cadastrado com sucesso!'
-                self.status = True
-            
+        elif editando == True:
+            self.modelo.clientes.update_item(cod_cliente, name, telefone, celular, endereco, bairro, cidade, estado, cep)
+            self.notify_text = 'Cliente ' + name +' Editado com sucesso!'
+            self.status = True
+        else:    
+            self.modelo.clientes.insert_item(name, telefone, celular, endereco, bairro, cidade, estado, cep)
+            self.notify_text = 'Cliente ' + name +' cadastrado com sucesso!'
+            self.status = False
+            self.main_status = True
+        
     def locate_clientes(self):
         rows = self.modelo.clientes.select_all()
         return rows
     
     def listar_cliente(self,cod):
+        cod = self.toInt(cod)
         rows = self.modelo.clientes.select_cliente(cod)
+        if rows == ():
+            self.notify_text = 'ERRO : Cliente não Cadastrado!'
+            self.status = False
+            raise CodigoInvalido,  'Código não cadastrado'
+        self.status = True
         return rows
     
-    def alugar(self,cod_cliente,cod_dvd):
+    def alugar(self, cod_cliente, cod_dvd):
+        cod_caixa = int(0)
         today = date.today()
-        if date(today.year, today.day, today.month).weekday() == 6 : # Sunday
-            dias = 7  # Uma semana para devolução com preço cheio
-        elif date(today.year, today.day, today.month).weekday() == 1: # Tuesday
+        if date(today.year, today.month, today.day).weekday() == 6 : # Sunday
+            dias = 2  # Devolução na terça
+        elif date(today.year, today.month, today.day).weekday() == 1: # Tuesday
             dias = 5 # Devolução no proximo domingo
-        
+    
         if cod_cliente =='':
             self.notify_text = 'ERRO : campo CÓDIGO CLIENTE precisa ser preenchido!'
             self.status = False
             raise  EmBranco , 'Código deve ser preenchido'
         else:
-            try:
-                cod_cliente = int(cod_cliente)
-            except:
-                self.notify_text = 'ERRO : campo CÓDIGO CLIENTE deve conter apenas números!'
-                self.status = False
-                raise CodigoInvalido , 'Código deve conter apenas números'
-                
-        if cod_dvd=='':
+            cod_cliente = self.toInt(cod_cliente)
+            
+        if cod_dvd == '':
             self.notify_text = 'ERRO : campo CÓDIGO DVD precisa ser preenchido!'
             self.status = False
             raise  EmBranco , 'Código deve ser preenchido'
         
         else:
-            try:
-                cod_dvd = int(cod_dvd)
-            except:
-                self.notify_text = 'ERRO : campo CÓDIGO DVD deve conter apenas números!'
-                self.status = False
-                raise CodigoInvalido , 'Código deve conter apenas números'
+            cod_dvd =self.toInt(cod_dvd)
         
         dvds = self.listar_titulo_filme(cod_dvd)
         if dvds != ():  
             locado = self.modelo.locados.locate_locados(cod_dvd)
             if locado == ():
-                self.modelo.locados.insert_locacao(cod_cliente, cod_dvd, dias)
+                self.modelo.locados.insert_locacao(cod_caixa, cod_cliente, cod_dvd, dias)
                 self.notify_text = 'Locação realizada com sucesso!'
-                self.status = True
+                self.status = False
+                self.main_status = True
                 return
             else:
                 self.notify_text = 'ERRO : DvD cod = %s já está Alugado!'%(cod_dvd)
-                self.status = False
+                self.status = True
         else:
             self.notify_text = 'ERRO : DvD cod = %s não Cadastrado!'%(cod_dvd)
-            self.status = False
+            self.status = True
         
     def devolucao(self,cod_dvd):
         if cod_dvd != '':
-            try:
-                cod_dvd = int(cod_dvd)
-            except:
-                self.notify_text = 'ERRO : campo CÓDIGO deve conter apenas números!'
-                self.status = False
-                raise CodigoInvalido , 'Código deve conter apenas números'
+            cod_dvd = self.toInt(cod_dvd)
         else:
             self.notify_text = 'ERRO : Campo CÓDIGO precisa ser preenchido!'
             self.status = False
@@ -152,7 +167,7 @@ class Controle:
         return rows
     
     def popular_combo_genero(self):
-        rows=self.modelo.genero.select_all()
+        rows=self.modelo.generos.select_all()
         return rows
     
     def cadastra_filme(self, genero_ativo, generos, titulo, quantidade):
@@ -160,9 +175,8 @@ class Controle:
             genero = generos[genero_ativo][1]
             cod_genero = self.modelo.generos.select_genero_desc(genero)
             cod_filme = self.modelo.filmes.insert_item(cod_genero[0][0], titulo, quantidade)
-
             for quant in range(quantidade):
-                self.modelo.dvds.insert_item(cod_filme[0])
+                self.modelo.dvds.insert_item(cod_filme)
             return True
         else:
             return False
@@ -170,7 +184,7 @@ class Controle:
     def listar_locados(self):
         rows = self.modelo.locados.select_locados()
         return rows
-    
+        
     def listar_titulo_filme(self,codigo):
         rows = self.modelo.dvds.select_dvd(codigo)
         return rows
@@ -178,3 +192,27 @@ class Controle:
     def listar_atrasados(self):
         rows = self.modelo.locados.select_locados_atrasados()
         return rows
+    
+    def listar_dvd(self, cod, quant_itens, lista):
+        cod = self.toInt(cod) 
+        for iten in range(quant_itens):
+            treeiter = lista.get_iter(iten)
+            cod_inlista = int(lista.get_value(treeiter, 0))
+            if cod == cod_inlista :
+                self.status = False
+                self.notify_text = 'DvD já inserido na lista de locação'
+                raise CodigoInvalido,  'Código em uso'
+        dvd = self.modelo.dvds.select_dvd(cod)
+        if dvd != ():  
+            locado = self.modelo.locados.locate_locados(cod)
+            if locado == ():
+                self.status = True
+            else:
+                self.notify_text = 'ERRO : DvD cod = %s já está Alugado!'%(cod)
+                self.status = False
+                raise CodigoInvalido,  'Código em uso'
+        else:
+            self.notify_text = 'ERRO : DvD cod = %s não Cadastrado!'%(cod)
+            self.status = False
+            raise CodigoInvalido,  'Código não cadastrado'
+        return dvd
