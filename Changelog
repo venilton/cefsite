@@ -1,4 +1,10 @@
 ﻿-------------------------------------------------------------------------
+(19/01/09) augustocmen@yahoo.com.br
+-------------------------------------------------------------------------
+Criado controle de transação na classe Modelo. As classes Tabela usam esse
+controle para realizar auto-commit ou não.
+Adicionado controle do loja em controle.py.
+-------------------------------------------------------------------------
 (16/01/09) augustocmen@yahoo.com.br
 -------------------------------------------------------------------------
 O objeto Modelo foi separado em mais de uma classe, cada uma representando

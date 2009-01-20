@@ -8,53 +8,74 @@ class Modelo:
 		self.conecta()
 		
 	def conecta(self):
-		global bd
-		global cursor
 		try:
-			bd = MySQLdb.connect('localhost',dblogin.user,dblogin.passwd)
-			bd.select_db(dblogin.dbname)
-			cursor = bd.cursor()
+			self.bd = MySQLdb.connect('localhost',dblogin.user,dblogin.passwd)
+			self.bd.select_db(dblogin.dbname)
+			self.cursor = self.bd.cursor()
 			
 		except MySQLdb.Error, e:
 			print "Error %d: %s" % (e.args[0], e.args[1])
 			sys.exit (1)
 
+		self.in_transaction = 0
+
 		#! Aqui se declaram as tabelas
-		self.clientes = Cliente(bd, cursor, 'clientes')
-		self.filmes = Filme(bd, cursor, 'filme')
-		self.generos = Genero(bd, cursor, 'generodvd')
-		self.dvds = DVD(bd, cursor, 'dvd')
-		self.locados = Locacao(bd, cursor, 'locados')
+		self.clientes = Cliente(self, 'clientes')
+		self.filmes = Filme(self, 'filme')
+		self.generos = Genero(self, 'generodvd')
+		self.dvds = DVD(self, 'dvd')
+		self.locados = Locacao(self, 'locados')
 
-		self.caixas = Caixa(bd, cursor, 'caixa')
-		self.categorias = Categoria(bd, cursor, 'categoria')
-		self.produtos = Produto(bd, cursor, 'produto')
-		self.estoque = Estoque(bd, cursor, 'estoque')
+		self.caixas = Caixa(self, 'caixa')
+		self.categorias = Categoria(self, 'categoria')
+		self.produtos = Produto(self, 'produto')
+		self.estoque = Estoque(self, 'estoque')
+		self.pedidos = Pedido(self, 'pedido')
+		self.item_pedidos = ItemPedido(self, 'itempedido')
 
+	def begin_transaction(self):
+		""" Inicia uma nova transação. """
+		self.in_transaction += 1
+
+	def end_transaction(self):
+		""" Termina uma transação (realiza commit caso não haja mais transações abertas). """
+		if self.in_transaction == 0:
+			raise Exception, "Nenhuma transação aberta."
+		elif self.in_transaction == 1:
+			self.bd.commit()
+
+		self.in_transaction -= 1
+
+	def rollback(self):
+		""" Realiza um rollback e termina quaisquer transações abertas. """
+		self.bd.rollback()
+		self.in_transaction = 0
 
 #Classe genérica
+
 class Tabela:
 	""" Classe genérica que define os comandos em uma tabela ou relacionamento. """
-	def __init__(self, bd, cursor, nome_tabela):
-		self.bd = bd
-		self.cursor = cursor
+	def __init__(self, modelo, nome_tabela):
+		self.modelo = modelo
 		self.nome_tabela = nome_tabela
 		self.all_fields = []
 
 	def runSql(self, query, params = None):
 		""" Roda um comando execute (insert, update, delete) no banco de dados. """
-		cursor.execute(query, params)
-		bd.commit()
+		self.modelo.cursor.execute(query, params)
+		if self.modelo.in_transaction == 0:
+			#Nenhuma transação aberta: realiza auto-commit
+			self.modelo.bd.commit()
 
 	def runQuery(self, query, params = None):
 		""" Roda uma consulta (select) no banco de dados. """
-		cursor.execute(query, params)
-		rows = cursor.fetchall()
+		self.modelo.cursor.execute(query, params)
+		rows = self.modelo.cursor.fetchall()
 		return rows
 
 	def lastInsertId(self):
-		cursor.execute('SELECT LAST_INSERT_ID()')
-		ret = cursor.fetchall()
+		self.modelo.cursor.execute('SELECT LAST_INSERT_ID()')
+		ret = self.modelo.cursor.fetchall()
 		return ret[0][0]
 
 	def select(self, campos, chaves = {}):
@@ -105,19 +126,31 @@ class Tabela:
 
 		return self.runSql(sql1, values)
 
+	def delete(self, chaves = {}):
+		""" Delete os registros identificado por chaves usando os valores de campos na tabela atual (nome_tabela). """
+		sql1 = 'DELETE FROM ' + self.nome_tabela
+
+		if chaves:
+			sql1 += ' WHERE '
+			for chave in chaves:
+				sql1 += chave + "=%s and "
+				values.append(chaves[chave])
+			sql1 = sql1[:-5] #tira o ' and '
+
+		return self.runSql(sql1, values)
+
 	def select_all(self):
 		return self.select(self.all_fields)
 
-	def insert_item():
-		pass
-	def update_item():
-		pass
-	def locate_item():
-		pass
+	#Para ser implementado nas classes filhas
+	def insert_item(): pass
+	def update_item(): pass
+	def locate_item(): pass
+	def delete_item(): pass
 
 class Cliente(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='clientes'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='clientes'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_cliente', 'nome', 'telefone', 'celular', 'endereco', 'bairro', 'cidade', 'estado', 'cep']
 
 	def insert_item(self, name, telefone, celular, endereco, bairro, cidade, estado, cep):
@@ -155,8 +188,8 @@ class Cliente(Tabela):
 		return self.runQuery("SELECT * FROM clientes WHERE cod_cliente=%s", [cod])
 
 class Caixa(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='caixa'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='caixa'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_caixa', 'nome', 'faturar']
 
 	def insert_item(self, nome, faturar):
@@ -178,8 +211,8 @@ class Caixa(Tabela):
 		return self.runQuery("SELECT * FROM caixa WHERE nome like '%%%s%%'" % (name))
 
 class Filme(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='filme'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='filme'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_filme', 'cod_genero', 'titulo', 'quantidade']
 
 	def insert_item(self, cod_genero, titulo, quantidade):
@@ -203,8 +236,8 @@ class Filme(Tabela):
 		return self.runQuery("SELECT * FROM filme WHERE nome like '%%%s%%'" % (name))
 
 class Genero(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='generodvd'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='generodvd'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_genero', 'descricao']
 
 	def insert_item(self, descricao):
@@ -230,8 +263,8 @@ class Genero(Tabela):
 		return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
 
 class DVD(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='dvd'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='dvd'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_dvd', 'cod_filme']
 
 	def insert_item(self, cod_filme):
@@ -251,8 +284,8 @@ class DVD(Tabela):
 		return self.runQuery("SELECT d.cod_dvd, f.titulo FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
 
 class Locacao(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='locados'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='locados'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['idcod', 'cod_cliente', 'cod_dvd', 'retirada', 'devolucao', 'expire_date', 'status_dvd']
 
 	def select_locados(self):
@@ -278,8 +311,8 @@ class Locacao(Tabela):
 		return self.update(campos, {'cod_dvd': cod_dvd })
 
 class Categoria(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='categoria'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='categoria'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_categoria', 'cod_caixa_padrao', 'nome', 'cod_categoria_pai']
 
 	def insert_item(self, cod_caixa_padrao, nome, cod_categoria_pai):
@@ -303,8 +336,8 @@ class Categoria(Tabela):
 		return self.runQuery("SELECT * FROM categoria WHERE nome like '%%%s%%'" % (name))
 
 class Produto(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='produto'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='produto'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_produto', 'cod_categoria', 'nome', 'descricao', 'preco', 'ativo']
 
 	def insert_item(self, cod_categoria, nome, descricao, preco, ativo):
@@ -334,8 +367,8 @@ class Produto(Tabela):
 class EstoqueError(Exception): pass
 
 class Estoque(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='estoque'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='estoque'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_produto', 'localiz', 'quantidade']
 
 	def add_estoque(self, cod_produto, localiz, quantidade):
@@ -365,9 +398,8 @@ class Estoque(Tabela):
 	def get_estoque(self, cod_produto, localiz):
 		""" Retorna o estoque de um produto (se for especificado, em um armazém). Retorna a quantidade em estoque,
 			0 caso não haja nenhum item no estoque ou None caso haja registro do produto no estoque. """
-		params = [cod_produto]
-
 		sql1 = "SELECT sum(quantidade) FROM estoque WHERE cod_produto=%s"
+		params = [cod_produto]
 		if localiz:
 			sql1 += " AND localiz=%s"
 			params.append(localiz)
@@ -378,11 +410,79 @@ class Estoque(Tabela):
 		else:
 			return None
 
+class PedidoError(Exception): pass
+
 class Pedido(Tabela):
-	def __init__(self, bd, cursor, nome_tabela='pedido'):
-		Tabela.__init__(self, bd, cursor, nome_tabela)
+	def __init__(self, modelo, nome_tabela='pedido'):
+		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_pedido', 'cod_cliente', 'datahora', 'status_pedido']
 
-	def novo_pedido(self):
-		pass
+	def novo_pedido(self, cod_cliente):
+		""" Inclui um novo pedido em branco """
+		runSql('INSERT INTO pedido (cod_cliente, datahora, status_pedido) VALUES (%s, NOW(), %s)', (cod_cliente, '0'))
+		return self.lastInsertId()
 
+	def status_pedido(self, cod_pedido):
+		rows = self.select(['status_pedido'], { 'cod_pedido': cod_pedido })
+		if rows:
+			return rows[0][0]
+		else:
+			return None
+
+	def fechar_pedido(self, cod_pedido):
+		""" Fecha o pedido gravado. """
+		return self.update({ 'status_pedido': '1' }, { 'cod_pedido': cod_pedido })
+
+	def cancelar_pedido(self, cod_pedido):
+		""" Cancela o pedido (status_pedido = 2) """
+		return self.update({ 'status_pedido': '2' }, { 'cod_pedido': cod_pedido })
+
+class ItemPedido(Tabela):
+	def __init__(self, modelo, nome_tabela='itempedido'):
+		Tabela.__init__(self, modelo, nome_tabela)
+		self.all_fields = ['cod_pedido', 'item', 'cod_produto', 'cod_caixa', 'localiz', 'quantidade', 'preco_unit', 'desconto', 'total']
+
+	def next_item(self, cod_pedido):
+		""" Obtém o número do próximo item no pedido (1 se o pedido não tiver itens) """
+		rows = self.runQuery("select max(item) from itempedido where cod_pedido=%s", (cod_pedido))
+		if rows[0][0]:
+			nitem = rows[0][0] + 1
+		else:
+			nitem = 1
+		return nitem
+
+	def add_item(self, cod_pedido, cod_produto, localiz, cod_caixa=None, quantidade=None, preco_unit=None, desconto=None):
+		nitem = self.next_item(cod_pedido)
+
+		rows = self.runQuery("""
+			SELECT c.cod_caixa_padrao, p.preco, p.ativo
+			FROM produto p, categoria c
+			WHERE c.cod_categoria=p.cod_categoria and p.cod_produto=%s
+			""", (cod_produto))
+		if not rows:
+			rows = [('', 0, 0)]
+		campos = {}
+		campos['cod_produto'] = cod_produto
+		campos['localiz'] = localiz
+		campos['cod_caixa'] = cod_caixa or rows[0][0]
+		campos['preco_unit'] = preco_unit or rows[0][1]
+		campos['quantidade'] = quantidade or 1
+  		campos['desconto'] = desconto or 0
+		campos['total'] = campos['quantidade'] * campos['preco_unit'] - campos['desconto']
+
+		self.insert(campos)
+		return nitem
+
+	def delete_item(self, cod_pedido, item):
+		return self.delete({ 'cod_pedido': cod_pedido, 'item': item })
+
+	def get_itens(self, cod_pedido):
+		ret = []
+		rows = self.select(self.all_fields, { 'cod_pedido': cod_pedido })
+		for row in rows:
+			campos = {}
+			for i in range(len(self.all_fields)):
+				campos[self.all_fields[i]] = row[i]
+			ret.append(campos)
+
+		return ret

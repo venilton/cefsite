@@ -1,4 +1,4 @@
-# coding: utf-8
+﻿# coding: utf-8
 
 import gtk
 import pygtk
@@ -8,10 +8,11 @@ from datetime import date
 from querys import Modelo
 from main_base import Login
 
-#Exceções
+#ExceÃ§Ãµes
 class ControleError(Exception): pass
 class EmBranco(ControleError):pass
 class CodigoInvalido(ControleError):pass
+class PedidoError(ControleError):pass
 
 class Controle:
     def __init__(self):
@@ -60,9 +61,9 @@ class Controle:
         try:
             cod = int(cod)
         except:
-            self.notify_text = 'ERRO : campo CÓDIGO deve conter apenas números!'
+            self.notify_text = 'ERRO : campo CÃ“DIGO deve conter apenas nÃºmeros!'
             self.status = False
-            raise CodigoInvalido , 'Código deve conter apenas números'
+            raise CodigoInvalido , 'CÃ³digo deve conter apenas nÃºmeros'
         return cod
         
     def cliente_localizado(self):
@@ -95,9 +96,9 @@ class Controle:
         cod = self.toInt(cod)
         rows = self.modelo.clientes.select_cliente(cod)
         if rows == ():
-            self.notify_text = 'ERRO : Cliente não Cadastrado!'
+            self.notify_text = 'ERRO : Cliente nÃ£o Cadastrado!'
             self.status = False
-            raise CodigoInvalido,  'Código não cadastrado'
+            raise CodigoInvalido,  'CÃ³digo nÃ£o cadastrado'
         self.status = True
         return rows
     
@@ -105,21 +106,21 @@ class Controle:
         cod_caixa = int(0)
         today = date.today()
         if date(today.year, today.month, today.day).weekday() == 6 : # Sunday
-            dias = 2  # Devolução na terça
+            dias = 2  # DevoluÃ§Ã£o na terÃ§a
         elif date(today.year, today.month, today.day).weekday() == 1: # Tuesday
-            dias = 5 # Devolução no proximo domingo
+            dias = 5 # DevoluÃ§Ã£o no proximo domingo
     
         if cod_cliente =='':
-            self.notify_text = 'ERRO : campo CÓDIGO CLIENTE precisa ser preenchido!'
+            self.notify_text = 'ERRO : campo CÃ“DIGO CLIENTE precisa ser preenchido!'
             self.status = False
-            raise  EmBranco , 'Código deve ser preenchido'
+            raise  EmBranco , 'CÃ³digo deve ser preenchido'
         else:
             cod_cliente = self.toInt(cod_cliente)
             
         if cod_dvd == '':
-            self.notify_text = 'ERRO : campo CÓDIGO DVD precisa ser preenchido!'
+            self.notify_text = 'ERRO : campo CÃ“DIGO DVD precisa ser preenchido!'
             self.status = False
-            raise  EmBranco , 'Código deve ser preenchido'
+            raise  EmBranco , 'CÃ³digo deve ser preenchido'
         
         else:
             cod_dvd =self.toInt(cod_dvd)
@@ -129,33 +130,33 @@ class Controle:
             locado = self.modelo.locados.locate_locados(cod_dvd)
             if locado == ():
                 self.modelo.locados.insert_locacao(cod_caixa, cod_cliente, cod_dvd, dias)
-                self.notify_text = 'Locação realizada com sucesso!'
+                self.notify_text = 'LocaÃ§Ã£o realizada com sucesso!'
                 self.status = False
                 self.main_status = True
                 return
             else:
-                self.notify_text = 'ERRO : DvD cod = %s já está Alugado!'%(cod_dvd)
+                self.notify_text = 'ERRO : DvD cod = %s jÃ¡ estÃ¡ Alugado!'%(cod_dvd)
                 self.status = True
         else:
-            self.notify_text = 'ERRO : DvD cod = %s não Cadastrado!'%(cod_dvd)
+            self.notify_text = 'ERRO : DvD cod = %s nÃ£o Cadastrado!'%(cod_dvd)
             self.status = True
         
     def devolucao(self,cod_dvd):
         if cod_dvd != '':
             cod_dvd = self.toInt(cod_dvd)
         else:
-            self.notify_text = 'ERRO : Campo CÓDIGO precisa ser preenchido!'
+            self.notify_text = 'ERRO : Campo CÃ“DIGO precisa ser preenchido!'
             self.status = False
-            raise  EmBranco , 'Código deve ser preenchido'
+            raise  EmBranco , 'CÃ³digo deve ser preenchido'
         
         cods = self.modelo.locados.select_locados()
         for cod in cods:
             if (int(cod_dvd) == cod[1]):
                 self.modelo.locados.insert_devolucao(cod[0])
-                self.notify_text = 'Devolução do DvD cod = %s realizada com sucesso!'%(cod_dvd)
+                self.notify_text = 'DevoluÃ§Ã£o do DvD cod = %s realizada com sucesso!'%(cod_dvd)
                 self.status = True
                 return
-        self.notify_text = 'ERRO : DvD cod = %s não está Alugado!'%(cod_dvd)
+        self.notify_text = 'ERRO : DvD cod = %s nÃ£o estÃ¡ Alugado!'%(cod_dvd)
         self.status = False
         
     def cadastra_genero_dvd(self,descricao):
@@ -200,19 +201,58 @@ class Controle:
             cod_inlista = int(lista.get_value(treeiter, 0))
             if cod == cod_inlista :
                 self.status = False
-                self.notify_text = 'DvD já inserido na lista de locação'
-                raise CodigoInvalido,  'Código em uso'
+                self.notify_text = 'DvD jÃ¡ inserido na lista de locaÃ§Ã£o'
+                raise CodigoInvalido,  'CÃ³digo em uso'
         dvd = self.modelo.dvds.select_dvd(cod)
         if dvd != ():  
             locado = self.modelo.locados.locate_locados(cod)
             if locado == ():
                 self.status = True
             else:
-                self.notify_text = 'ERRO : DvD cod = %s já está Alugado!'%(cod)
+                self.notify_text = 'ERRO : DvD cod = %s jÃ¡ estÃ¡ Alugado!'%(cod)
                 self.status = False
-                raise CodigoInvalido,  'Código em uso'
+                raise CodigoInvalido,  'CÃ³digo em uso'
         else:
-            self.notify_text = 'ERRO : DvD cod = %s não Cadastrado!'%(cod)
+            self.notify_text = 'ERRO : DvD cod = %s nÃ£o Cadastrado!'%(cod)
             self.status = False
-            raise CodigoInvalido,  'Código não cadastrado'
+            raise CodigoInvalido,  'CÃ³digo nÃ£o cadastrado'
         return dvd
+
+	# Loja
+	def novo_pedido(self, cod_cliente):
+		cod_pedido = self.modelo.pedidos.novo_pedido(cod_cliente)
+		return cod_pedido
+
+	def incluir_itens(self, cod_pedido, itens):
+		""" Inclui um ou mais itens no pedido. itens deve ser uma lista de dicionários com os campos. """
+
+		status = self.modelo.pedidos.status_pedido(cod_pedido)
+		if not status:
+			raise CodigoInvalido, "Pedido não encontrado."
+		elif status == '0':
+			for item in itens:
+				item['item'] = self.modelo.item_pedidos.add_item(cod_pedido, item['cod_produto'], item['localiz'], item['cod_caixa'], item['quantidade'], item['preco_unit'], item['desconto'])
+		else:
+			raise PedidoError, "Só é possível adicionar itens em pedidos em aberto."
+
+	def fechar_pedido(self, cod_pedido):
+		""" Fecha o pedido especificado, dando baixa em todos os produtos contidos nele. """
+
+		status = self.modelo.pedidos.status_pedido(cod_pedido)
+		if not status:
+			raise CodigoInvalido, "Pedido não encontrado."
+		elif status == '0':
+			self.modelo.begin_transaction()
+			try:
+				rows = self.modelo.item_pedido.get_itens(cod_pedido)
+				for row in rows:
+					self.modelo.estoque.baixa_estoque(row['cod_produto'], row['localiz'], row['quantidade'])
+
+				self.modelo.pedidos.fechar_pedido(cod_pedido)
+			except:
+				self.modelo.rollback()
+				raise
+
+			self.modelo.end_transaction()
+		else:
+			raise PedidoError, "Só é possível fechar pedidos em aberto."
