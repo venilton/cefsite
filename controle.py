@@ -6,7 +6,7 @@ pygtk.require('2.0')
 from datetime import date
 
 from querys import Modelo
-from main_base import Login
+from login import Login
 
 #Exceções
 class ControleError(Exception): pass
@@ -108,6 +108,8 @@ class Controle:
             dias = 2  # Devolução na terça
         elif date(today.year, today.month, today.day).weekday() == 1: # Tuesday
             dias = 5 # Devolução no proximo domingo
+        else:
+            dias = 7 #FixMe
     
         if cod_cliente =='':
             self.notify_text = 'ERRO : campo CÓDIGO CLIENTE precisa ser preenchido!'
@@ -150,7 +152,7 @@ class Controle:
         
         cods = self.modelo.locados.select_locados()
         for cod in cods:
-            if (int(cod_dvd) == cod[1]):
+            if cod_dvd == cod[1]:
                 self.modelo.locados.insert_devolucao(cod[0])
                 self.notify_text = 'Devolução do DvD cod = %s realizada com sucesso!'%(cod_dvd)
                 self.status = True
@@ -200,7 +202,7 @@ class Controle:
             cod_inlista = int(lista.get_value(treeiter, 0))
             if cod == cod_inlista :
                 self.status = False
-                self.notify_text = 'DvD já inserido na lista de locação'
+                self.notify_text = 'DvD já está inserido na lista de locação'
                 raise CodigoInvalido,  'Código em uso'
         dvd = self.modelo.dvds.select_dvd(cod)
         if dvd != ():  
@@ -216,3 +218,49 @@ class Controle:
             self.status = False
             raise CodigoInvalido,  'Código não cadastrado'
         return dvd
+
+    def cliente_devolucao(self):
+        return self.cod_cliente_devolucao
+        
+    def listar_dvds_locados(self, cod_dvd, quant_itens,  lista):
+        self.cod_cliente_devolucao = ''
+        listado = False
+        if cod_dvd != '':
+            cod_dvd = self.toInt(cod_dvd)
+        else:
+            self.notify_text = 'ERRO : Campo CÓDIGO precisa ser preenchido!'
+            self.status = False
+            raise  EmBranco , 'Código deve ser preenchido'
+        cods = self.modelo.locados.select_locados()
+        for cod in cods:
+            if cod_dvd == cod[1]:
+                self.cod_cliente_devolucao = cod[2]
+                self.status = True
+                break
+        if self.cod_cliente_devolucao != '':
+            locados = self.modelo.locados.select_locados_porcliente(self.cod_cliente_devolucao)
+            dvds = []
+            if quant_itens >0:
+                for locado in locados:
+                    listado = False
+                    for iten in range(quant_itens):
+                        treeiter = lista.get_iter(iten)
+                        cod_inlista = int(lista.get_value(treeiter, 0))
+                        if locado[1] == cod_inlista :
+                            #self.status = False
+                            #self.notify_text = 'DvD já está inserido na lista de locação'
+                            #raise CodigoInvalido,  'Código em uso'
+                            listado = True
+                            break
+                    if listado == False:
+                        dvd = self.modelo.dvds.select_dvd(locado[1])
+                        dvds.append(dvd)
+            else:
+                for locado in locados:
+                    dvd = self.modelo.dvds.select_dvd(locado[1])
+                    dvds.append(dvd)
+        else:
+            self.notify_text = 'ERRO : DvD cod = %s não está Alugado!'%(cod_dvd)
+            self.status = False
+            raise CodigoInvalido,  'Código invalido'
+        return dvds

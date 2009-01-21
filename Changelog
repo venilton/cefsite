@@ -1,4 +1,10 @@
-﻿-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+(21/01/09) marcos_venilton@yahoo.com.br
+-------------------------------------------------------------------------
+O modulo Main_Base foi renomeado para loja e dividido em arquivos especificos
+para cada area do programa.
+adicionado admin, iconmenu, notify, login
+-------------------------------------------------------------------------
 (16/01/09) augustocmen@yahoo.com.br
 -------------------------------------------------------------------------
 O objeto Modelo foi separado em mais de uma classe, cada uma representando
