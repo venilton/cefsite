@@ -1,5 +1,4 @@
-Validação dos dados em todos os formularios de cadastros(Unittest)(iniciado)
 Implementar rotinas de pagamento
 Implementar rotinas de Reservas
 Usuarios do sistema com permissões de acesso
-Buscas rápidas, por clientes , dvds e produtos
+Buscas rápidas, por clientes , dvds e produtos (usando Kiwi.Objectlist) 

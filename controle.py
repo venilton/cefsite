@@ -154,7 +154,7 @@ class Controle:
         for cod in cods:
             if cod_dvd == cod[1]:
                 self.modelo.locados.insert_devolucao(cod[0])
-                self.notify_text = 'Devolução do DvD cod = %s realizada com sucesso!'%(cod_dvd)
+                self.notify_text = 'Devolução realizada com sucesso!'
                 self.status = True
                 return
         self.notify_text = 'ERRO : DvD cod = %s não está Alugado!'%(cod_dvd)
@@ -222,45 +222,47 @@ class Controle:
     def cliente_devolucao(self):
         return self.cod_cliente_devolucao
         
+    def dvd_listado_check(self):
+        return self.listado
+        
     def listar_dvds_locados(self, cod_dvd, quant_itens,  lista):
-        self.cod_cliente_devolucao = ''
-        listado = False
+        self.listado = False
         if cod_dvd != '':
             cod_dvd = self.toInt(cod_dvd)
         else:
             self.notify_text = 'ERRO : Campo CÓDIGO precisa ser preenchido!'
             self.status = False
             raise  EmBranco , 'Código deve ser preenchido'
-        cods = self.modelo.locados.select_locados()
-        for cod in cods:
-            if cod_dvd == cod[1]:
-                self.cod_cliente_devolucao = cod[2]
-                self.status = True
-                break
-        if self.cod_cliente_devolucao != '':
-            locados = self.modelo.locados.select_locados_porcliente(self.cod_cliente_devolucao)
-            dvds = []
-            if quant_itens >0:
-                for locado in locados:
-                    listado = False
-                    for iten in range(quant_itens):
-                        treeiter = lista.get_iter(iten)
-                        cod_inlista = int(lista.get_value(treeiter, 0))
-                        if locado[1] == cod_inlista :
-                            #self.status = False
-                            #self.notify_text = 'DvD já está inserido na lista de locação'
-                            #raise CodigoInvalido,  'Código em uso'
-                            listado = True
-                            break
-                    if listado == False:
-                        dvd = self.modelo.dvds.select_dvd(locado[1])
-                        dvds.append(dvd)
-            else:
+        if lista == []:
+            self.cod_cliente_devolucao = ''
+            #Busca cod do cliente
+            cods = self.modelo.locados.select_locados()
+            for cod in cods:
+                if cod_dvd == cod[1]:
+                    self.cod_cliente_devolucao = cod[2]
+                    self.status = True
+                    break
+            if self.cod_cliente_devolucao == '':
+                self.notify_text = 'ERRO : DvD cod = %s não está Alugado!'%(cod_dvd)
+                self.status = False
+                raise CodigoInvalido,  'Código invalido'
+            else:    
+                #Busca dvds alugados pelo cliente        
+                locados = self.modelo.locados.select_locados_porcliente(self.cod_cliente_devolucao)
+                dvds = []
                 for locado in locados:
                     dvd = self.modelo.dvds.select_dvd(locado[1])
                     dvds.append(dvd)
         else:
-            self.notify_text = 'ERRO : DvD cod = %s não está Alugado!'%(cod_dvd)
-            self.status = False
-            raise CodigoInvalido,  'Código invalido'
+            for cods in lista:
+                cod_inlista =cods.cod
+                if cod_inlista == cod_dvd :
+                    self.status = True
+                    self.listado = True
+                    cods.check = True
+                    break
+            if self.listado == False:
+                self.notify_text = 'ERRO : DvD cod = %s não está Alugado para este Cliente!'%(cod_dvd)
+                self.status = False
+                raise CodigoInvalido,  'Código invalido'
         return dvds

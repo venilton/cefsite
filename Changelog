@@ -1,4 +1,12 @@
 -------------------------------------------------------------------------
+(25/01/09) marcos_venilton@yahoo.com.br
+-------------------------------------------------------------------------
+adicionado modulo clientes e locacao
+gtk.Treview substituido por Kiwi.ObjectList
+no modulo clientes e devolução
+adicionado campo de busca na janela localizar cliente 
+Cadastro de Clientes, Retirada e Devolução Funcionais.(reportar bugs)
+-------------------------------------------------------------------------
 (21/01/09) marcos_venilton@yahoo.com.br
 -------------------------------------------------------------------------
 O modulo Main_Base foi renomeado para loja e dividido em arquivos especificos

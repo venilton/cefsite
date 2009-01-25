@@ -22,23 +22,20 @@ class Admin:
         menuitem.connect('activate', self.logoff)
 
         menuitem = iconMenuItem(('_Fechar'),gtk.STOCK_CLOSE)
-        menuitem.connect('activate', gtk.main_quit)
+        #menuitem.connect('activate', gtk.main_quit())
         menu.add(menuitem)
     
     def notification (self, widget, focus):
-        status = self.controle.notify()
-        if status[0] == True:
-            self.notify.set_text(self.notify_text)
-            self.hboxnotify.show()
-        else:
-            self.hboxnotify.hide()
-            
+        status = self.controle.main_notify()
+        if status == True:
+            self.notify_box.show()
+ 
+    def close_notification(self, widget):
+        self.controle.main_status = False
+        self.notify_box.hide()
+
     def open_generos(self, widget):
         Generos(self.controle)
-        
-    def close_notification(self, widget):
-        self.show_notify == False
-        self.hboxnotify.hide()
         
     def open_filmes(self, widget):
         Filmes(self.controle)
@@ -60,6 +57,7 @@ class Admin:
         self.w_admin.set_title("CEF SHOP - Administração")
         self.w_admin.set_size_request(580,280)
         self.controle = controle
+        self.notify_box = notify_area(self.controle, True, 'apply')
 
 #---Botoes
         button_generos = gtk.Button("Generos")
@@ -115,9 +113,13 @@ class Admin:
         
         vbox_controle.add(button_locados)
         vbox_controle.add(button_atrasados)
+        
+#-------area de notificacao
+        vbox_main.pack_start(self.notify_box,False, True, 4)
 
 #-------Mostra tudo
         self.w_admin.show_all()
+        self.notify_box.hide()
         self.w_admin.show()
 #-----------------------------------------------------
 class Generos:
@@ -419,7 +421,7 @@ class Atrasados:
         self.w_atrasados.set_position(gtk.WIN_POS_CENTER)
         self.w_atrasados.connect("destroy", self.close)
         self.w_atrasados.set_title("CEF SHOP - Locados")
-        self.w_atrasados.set_size_request(450,250)
+        self.w_atrasados.set_size_request(650,350)
         self.w_atrasados.set_border_width(8)
         self.controle = controle
 
@@ -447,4 +449,3 @@ class Atrasados:
 
         self.w_atrasados.show_all()
         self.w_atrasados.show()
-#-----------------------------------------------------

@@ -18,19 +18,19 @@ class TestesLocacao(unittest.TestCase):
     
     def testCodDVDEmBranco(self):
         """Locacao Campo Codigo DVD nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.alugar, "1", "", True)
+        self.assertRaises(controle.EmBranco, self.metodo.alugar, "1", "")
     
     def testCodClienteEmBranco(self):
         """Locacao Campo Codigo Cliente nao deve ficar em branco"""
-        self.assertRaises(controle.EmBranco, self.metodo.alugar, "","1", True)
+        self.assertRaises(controle.EmBranco, self.metodo.alugar, "","1")
     
     def testLetrasNoCodigoDVD(self):
         """Locacao Campo Codigo DVD nao deve conter letras"""
-        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "1","a", True)
+        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "1","a")
     
     def testLetrasNoCodigoCliente(self):
         """Locacao Campo Codigo Cliente nao deve conter letras"""
-        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "a","1", True)
+        self.assertRaises(controle.CodigoInvalido, self.metodo.alugar, "a","1")
         
 class TestesDevolucao(unittest.TestCase):
     """    Testes Devolucao    """
@@ -44,8 +44,6 @@ class TestesDevolucao(unittest.TestCase):
         """Devolucao Campo Codigo nao deve conter letras"""
         self.assertRaises(controle.CodigoInvalido, self.metodo.devolucao, "a")
         
-
-
 
 #-------Selecionar suites------------------------------------------
 suite1 = unittest.TestLoader().loadTestsFromTestCase(TestesCadastroClientes)
