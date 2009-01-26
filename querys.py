@@ -192,148 +192,151 @@ class Caixa(Tabela):
 		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_caixa', 'nome', 'faturar']
 
-	def insert_item(self, nome, faturar):
-		campos = {}
-		if nome is not None:		campos['nome'] = nome
-		if faturar is not None:		campos['faturar'] = faturar
+    def insert_item(self, nome, faturar):
+        campos = {}
+        if nome is not None:		campos['nome'] = nome
+        if faturar is not None:		campos['faturar'] = faturar
 
-		self.insert(campos)
-		return self.lastInsertId()
+        self.insert(campos)
+        return self.lastInsertId()
 
-	def update_item(self, cod_caixa, nome, faturar):
-		campos = {}
-		if nome is not None:		campos['nome'] = nome
-		if faturar is not None:		campos['faturar'] = faturar
+    def update_item(self, cod_caixa, nome, faturar):
+        campos = {}
+        if nome is not None:		campos['nome'] = nome
+        if faturar is not None:		campos['faturar'] = faturar
 
-		return self.update(campos, {'cod_caixa': cod_caixa })
+        return self.update(campos, {'cod_caixa': cod_caixa })
 
-	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM caixa WHERE nome like '%%%s%%'" % (name))
+    def locate_item(self, name):
+        return self.runQuery("SELECT * FROM caixa WHERE nome like '%%%s%%'" % (name))
 
 class Filme(Tabela):
 	def __init__(self, modelo, nome_tabela='filme'):
 		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_filme', 'cod_genero', 'titulo', 'quantidade']
 
-	def insert_item(self, cod_genero, titulo, quantidade):
-		campos = {}
-		if cod_genero is not None:	campos['cod_genero'] = cod_genero
-		if titulo is not None:		campos['titulo'] = titulo
-		if quantidade is not None:	campos['quantidade'] = quantidade
+    def insert_item(self, cod_genero, titulo, quantidade):
+        campos = {}
+        if cod_genero is not None:	campos['cod_genero'] = cod_genero
+        if titulo is not None:		campos['titulo'] = titulo
+        if quantidade is not None:	campos['quantidade'] = quantidade
 
-		self.insert(campos)
-		return self.lastInsertId()
+        self.insert(campos)
+        return self.lastInsertId()
 
-	def update_item(self, cod_filme, cod_genero, titulo, quantidade):
-		campos = {}
-		if cod_genero is not None:	campos['cod_genero'] = cod_genero
-		if titulo is not None:		campos['titulo'] = titulo
-		if quantidade is not None:	campos['quantidade'] = quantidade
+    def update_item(self, cod_filme, cod_genero, titulo, quantidade):
+        campos = {}
+        if cod_genero is not None:	campos['cod_genero'] = cod_genero
+        if titulo is not None:		campos['titulo'] = titulo
+        if quantidade is not None:	campos['quantidade'] = quantidade
 
-		return self.update(campos, {'cod_filme': cod_filme})
+        return self.update(campos, {'cod_filme': cod_filme})
 
-	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM filme WHERE nome like '%%%s%%'" % (name))
+    def locate_item(self, name):
+        return self.runQuery("SELECT * FROM filme WHERE nome like '%%%s%%'" % (name))
 
 class Genero(Tabela):
 	def __init__(self, modelo, nome_tabela='generodvd'):
 		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_genero', 'descricao']
 
-	def insert_item(self, descricao):
-		campos = {}
-		if descricao is not None:	campos['descricao'] = descricao
+    def insert_item(self, descricao):
+        campos = {}
+        if descricao is not None:	campos['descricao'] = descricao
 
-		self.insert(campos)
-		return self.lastInsertId()
+        self.insert(campos)
+        return self.lastInsertId()
 
-	def update_item(self, cod_genero, descricao):
-		campos = {}
-		if descricao is not None:	campos['descricao'] = descricao
+    def update_item(self, cod_genero, descricao):
+        campos = {}
+        if descricao is not None:	campos['descricao'] = descricao
 
-		return self.update(campos, {'cod_genero': cod_genero })
+        return self.update(campos, {'cod_genero': cod_genero })
 
-	def locate_item(self, descricao):
-		return self.runQuery("SELECT * FROM generodvd WHERE descricao like '%%%s%%'" % (descricao))
+    def locate_item(self, descricao):
+        return self.runQuery("SELECT * FROM generodvd WHERE descricao like '%%%s%%'" % (descricao))
 
-	def select_genero(self, cod):
-		return self.runQuery("SELECT * FROM generodvd WHERE cod_genero=%s", [cod])
-	
-	def select_genero_desc(self, descricao):
-		return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
+    def select_genero(self, cod):
+        return self.runQuery("SELECT * FROM generodvd WHERE cod_genero=%s", [cod])
+    
+    def select_genero_desc(self, descricao):
+        return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
 
 class DVD(Tabela):
 	def __init__(self, modelo, nome_tabela='dvd'):
 		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_dvd', 'cod_filme']
 
-	def insert_item(self, cod_filme):
-		campos = {}
-		if cod_filme is not None:	campos['cod_filme'] = cod_filme
+    def insert_item(self, cod_filme):
+        campos = {}
+        if cod_filme is not None:	campos['cod_filme'] = cod_filme
 
-		self.insert(campos)
-		return self.lastInsertId()
+        self.insert(campos)
+        return self.lastInsertId()
 
-	def update_item(self, cod_dvd, cod_filme):
-		campos = {}
-		if cod_filme is not None:	campos['cod_filme'] = cod_filme
+    def update_item(self, cod_dvd, cod_filme):
+        campos = {}
+        if cod_filme is not None:	campos['cod_filme'] = cod_filme
 
-		return self.update(campos, {'cod_dvd': cod_dvd })
+        return self.update(campos, {'cod_dvd': cod_dvd })
 
-	def select_dvd(self, cod):
-		return self.runQuery("SELECT d.cod_dvd, f.titulo FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
+    def select_dvd(self, cod):
+        return self.runQuery("SELECT d.cod_dvd, f.titulo FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
 
 class Locacao(Tabela):
 	def __init__(self, modelo, nome_tabela='locados'):
 		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['idcod', 'cod_cliente', 'cod_dvd', 'retirada', 'devolucao', 'expire_date', 'status_dvd']
 
-	def select_locados(self):
-		return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0'")
+    def select_locados(self):
+        return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0'")
 
-	def select_locados_atrasados(self):
-		return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0' AND expire_date < CURDATE()")
+    def select_locados_porcliente(self,  cod_cliente):
+        return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0'AND cod_cliente=%s", (cod_cliente) )
 
-	def locate_locados(self, cod_dvd):
-		return self.runQuery("SELECT idcod FROM locados WHERE status_dvd = '0' AND cod_dvd= %s", (cod_dvd))
+    def select_locados_atrasados(self):
+        return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0' AND expire_date < CURDATE()")
 
-	def insert_locacao(self, cod_caixa, cod_cliente, cod_dvd, dias):
-		self.runSql('INSERT INTO locados (cod_caixa, cod_cliente, cod_dvd, retirada, expire_date) VALUES (%s, %s, %s, NOW(), DATE_ADD(CURDATE( ), INTERVAL %s DAY))', (cod_caixa, cod_cliente, cod_dvd, dias))
-		return self.lastInsertId()
+    def locate_locados(self, cod_dvd):
+        return self.runQuery("SELECT idcod FROM locados WHERE status_dvd = '0' AND cod_dvd= %s", (cod_dvd))
 
-	def insert_devolucao(self, idcod):
-		return self.runSql("UPDATE locados SET status_dvd = %s, devolucao = NOW() where idcod=%s", ('1', idcod))
+    def insert_locacao(self, cod_caixa, cod_cliente, cod_dvd, dias):
+        self.runSql('INSERT INTO locados (cod_caixa, cod_cliente, cod_dvd, retirada, expire_date) VALUES (%s, %s, %s, NOW(), DATE_ADD(CURDATE( ), INTERVAL %s DAY))', (cod_caixa, cod_cliente, cod_dvd, dias))
+        return self.lastInsertId()
 
-	def update_item(self, cod_dvd, cod_filme):
-		campos = {}
-		if cod_filme is not None:	campos['cod_filme'] = cod_filme
+    def insert_devolucao(self, idcod):
+        return self.runSql("UPDATE locados SET status_dvd = %s, devolucao = NOW() where idcod=%s", ('1', idcod))
 
-		return self.update(campos, {'cod_dvd': cod_dvd })
+    def update_item(self, cod_dvd, cod_filme):
+        campos = {}
+        if cod_filme is not None:	campos['cod_filme'] = cod_filme
+
+        return self.update(campos, {'cod_dvd': cod_dvd })
 
 class Categoria(Tabela):
 	def __init__(self, modelo, nome_tabela='categoria'):
 		Tabela.__init__(self, modelo, nome_tabela)
 		self.all_fields = ['cod_categoria', 'cod_caixa_padrao', 'nome', 'cod_categoria_pai']
 
-	def insert_item(self, cod_caixa_padrao, nome, cod_categoria_pai):
-		campos = {}
-		if cod_caixa_padrao is not None:	campos['cod_caixa_padrao'] = cod_caixa_padrao
-		if nome is not None:				campos['nome'] = nome
-		if cod_categoria_pai is not None:	campos['cod_categoria_pai'] = cod_categoria_pai
+    def insert_item(self, cod_caixa_padrao, nome, cod_categoria_pai):
+        campos = {}
+        if cod_caixa_padrao is not None:	campos['cod_caixa_padrao'] = cod_caixa_padrao
+        if nome is not None:				campos['nome'] = nome
+        if cod_categoria_pai is not None:	campos['cod_categoria_pai'] = cod_categoria_pai
 
-		self.insert(campos)
-		return self.lastInsertId()
+        self.insert(campos)
+        return self.lastInsertId()
 
-	def update_item(self, cod_categoria, cod_caixa_padrao, nome, cod_categoria_pai):
-		campos = {}
-		if cod_caixa_padrao is not None:	campos['cod_caixa_padrao'] = cod_caixa_padrao
-		if nome is not None:				campos['nome'] = nome
-		if cod_categoria_pai is not None:	campos['cod_categoria_pai'] = cod_categoria_pai
+    def update_item(self, cod_categoria, cod_caixa_padrao, nome, cod_categoria_pai):
+        campos = {}
+        if cod_caixa_padrao is not None:	campos['cod_caixa_padrao'] = cod_caixa_padrao
+        if nome is not None:				campos['nome'] = nome
+        if cod_categoria_pai is not None:	campos['cod_categoria_pai'] = cod_categoria_pai
 
-		return self.update(campos, {'cod_categoria': cod_categoria })
+        return self.update(campos, {'cod_categoria': cod_categoria })
 
-	def locate_item(self, name):
-		return self.runQuery("SELECT * FROM categoria WHERE nome like '%%%s%%'" % (name))
+    def locate_item(self, name):
+        return self.runQuery("SELECT * FROM categoria WHERE nome like '%%%s%%'" % (name))
 
 class Produto(Tabela):
 	def __init__(self, modelo, nome_tabela='produto'):
@@ -484,5 +487,4 @@ class ItemPedido(Tabela):
 			for i in range(len(self.all_fields)):
 				campos[self.all_fields[i]] = row[i]
 			ret.append(campos)
-
 		return ret

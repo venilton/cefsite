@@ -6,7 +6,7 @@ pygtk.require('2.0')
 from datetime import date
 
 from querys import Modelo
-from main_base import Login
+from login import Login
 
 #ExceÃ§Ãµes
 class ControleError(Exception): pass
@@ -106,9 +106,11 @@ class Controle:
         cod_caixa = int(0)
         today = date.today()
         if date(today.year, today.month, today.day).weekday() == 6 : # Sunday
-            dias = 2  # DevoluÃ§Ã£o na terÃ§a
+            dias = 2  # Devolução na terça
         elif date(today.year, today.month, today.day).weekday() == 1: # Tuesday
-            dias = 5 # DevoluÃ§Ã£o no proximo domingo
+            dias = 5 # Devolução no proximo domingo
+        else:
+            dias = 7 #FixMe
     
         if cod_cliente =='':
             self.notify_text = 'ERRO : campo CÃ“DIGO CLIENTE precisa ser preenchido!'
@@ -151,12 +153,12 @@ class Controle:
         
         cods = self.modelo.locados.select_locados()
         for cod in cods:
-            if (int(cod_dvd) == cod[1]):
+            if cod_dvd == cod[1]:
                 self.modelo.locados.insert_devolucao(cod[0])
-                self.notify_text = 'DevoluÃ§Ã£o do DvD cod = %s realizada com sucesso!'%(cod_dvd)
+                self.notify_text = 'Devolução realizada com sucesso!'
                 self.status = True
                 return
-        self.notify_text = 'ERRO : DvD cod = %s nÃ£o estÃ¡ Alugado!'%(cod_dvd)
+        self.notify_text = 'ERRO: DVD cod = %s não está alugado!'%(cod_dvd)
         self.status = False
         
     def cadastra_genero_dvd(self,descricao):
@@ -201,8 +203,8 @@ class Controle:
             cod_inlista = int(lista.get_value(treeiter, 0))
             if cod == cod_inlista :
                 self.status = False
-                self.notify_text = 'DvD jÃ¡ inserido na lista de locaÃ§Ã£o'
-                raise CodigoInvalido,  'CÃ³digo em uso'
+                self.notify_text = 'DvD já está inserido na lista de locação'
+                raise CodigoInvalido,  'Código em uso'
         dvd = self.modelo.dvds.select_dvd(cod)
         if dvd != ():  
             locado = self.modelo.locados.locate_locados(cod)
@@ -256,3 +258,51 @@ class Controle:
 			self.modelo.end_transaction()
 		else:
 			raise PedidoError, "Só é possível fechar pedidos em aberto."
+
+	def cliente_devolucao(self):
+        return self.cod_cliente_devolucao
+        
+    def dvd_listado_check(self):
+        return self.listado
+        
+    def listar_dvds_locados(self, cod_dvd, quant_itens,  lista):
+        self.listado = False
+        if cod_dvd != '':
+            cod_dvd = self.toInt(cod_dvd)
+        else:
+            self.notify_text = 'ERRO : Campo CÓDIGO precisa ser preenchido!'
+            self.status = False
+            raise  EmBranco , 'Código deve ser preenchido'
+        if lista == []:
+            self.cod_cliente_devolucao = ''
+            #Busca cod do cliente
+            cods = self.modelo.locados.select_locados()
+            for cod in cods:
+                if cod_dvd == cod[1]:
+                    self.cod_cliente_devolucao = cod[2]
+                    self.status = True
+                    break
+            if self.cod_cliente_devolucao == '':
+                self.notify_text = 'ERRO : DvD cod = %s não está Alugado!'%(cod_dvd)
+                self.status = False
+                raise CodigoInvalido,  'Código invalido'
+            else:    
+                #Busca dvds alugados pelo cliente        
+                locados = self.modelo.locados.select_locados_porcliente(self.cod_cliente_devolucao)
+                dvds = []
+                for locado in locados:
+                    dvd = self.modelo.dvds.select_dvd(locado[1])
+                    dvds.append(dvd)
+        else:
+            for cods in lista:
+                cod_inlista =cods.cod
+                if cod_inlista == cod_dvd :
+                    self.status = True
+                    self.listado = True
+                    cods.check = True
+                    break
+            if self.listado == False:
+                self.notify_text = 'ERRO : DvD cod = %s não está Alugado para este Cliente!'%(cod_dvd)
+                self.status = False
+                raise CodigoInvalido,  'Código invalido'
+        return dvds

@@ -1,12 +1,20 @@
 Crie um banco de dados vazio no Mysql
 
-Edite o arquivo dblogin.py
+Crie o arquivo dblogin.py
+com o seguinte conteudo
+--------------------------------------------
+user = 'marcos'
+passwd = 'marcos123'
+dbname = 'cefshop'
+------------------------------------------
          
 onde marcos é o nome do usuario do banco de dados
 marcos123 é a senha
 e cefshop o nome do bando de dados
 
 altere esses valores pelos que forneceu ao Mysql
+
+Salve o arquivo dblogin.py na mesma pasta com o restante do código 
 
 então rode o arquivo create_table.py  para que ele crie as tabelas no banco de dados.
 
