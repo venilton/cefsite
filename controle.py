@@ -5,7 +5,7 @@ import pygtk
 pygtk.require('2.0')
 from datetime import date
 
-from querys import Modelo
+from querys import Modelo , Caixa
 from login import Login
 
 #Exceções
@@ -23,6 +23,9 @@ class Controle:
     
     def set_modelo(self, modelo):
         self.modelo = modelo
+    
+    def get_modelo(self):
+        return self.modelo
     
     def set_interface(self, interface):
         self.interface = interface
@@ -164,19 +167,25 @@ class Controle:
         self.modelo.generos.insert_item(descricao)
         return True
     
+    def cadastra_categoria_dvd(self, descricao, preco):
+        self.modelo.categorias_dvd.insert_item(descricao, preco)
+        return True
+    
+    def listar_categoria_dvd(self):
+        rows = self.modelo.categorias_dvd.select_all()
+        return rows
+    
     def listar_genero_dvd(self):
         rows = self.modelo.generos.select_all()
         return rows
     
-    def popular_combo_genero(self):
-        rows=self.modelo.generos.select_all()
-        return rows
-    
-    def cadastra_filme(self, genero_ativo, generos, titulo, quantidade):
-        if genero_ativo >= 0:  
+    def cadastra_filme(self, genero_ativo, generos, categoria_ativa, categorias, titulo, quantidade):
+        if genero_ativo >= 0 and categoria_ativa >=0:  
             genero = generos[genero_ativo][1]
+            categoria = categorias[categoria_ativa][1]
             cod_genero = self.modelo.generos.select_genero_desc(genero)
-            cod_filme = self.modelo.filmes.insert_item(cod_genero[0][0], titulo, quantidade)
+            cod_categoria = self.modelo.categorias_dvd.select_categoria_desc(categoria)
+            cod_filme = self.modelo.filmes.insert_item(cod_genero[0][0], cod_categoria[0][0], titulo, quantidade)
             for quant in range(quantidade):
                 self.modelo.dvds.insert_item(cod_filme)
             return True
@@ -196,19 +205,22 @@ class Controle:
         return rows
     
     def listar_dvd(self, cod, quant_itens, lista):
-        cod = self.toInt(cod) 
-        for iten in range(quant_itens):
-            treeiter = lista.get_iter(iten)
-            cod_inlista = int(lista.get_value(treeiter, 0))
-            if cod == cod_inlista :
+        cod = self.toInt(cod)
+        for cods in lista:
+            if cod == cods.cod :
                 self.status = False
                 self.notify_text = 'DvD já está inserido na lista de locação'
                 raise CodigoInvalido,  'Código em uso'
         dvd = self.modelo.dvds.select_dvd(cod)
+        dvds = []
         if dvd != ():  
             locado = self.modelo.locados.locate_locados(cod)
             if locado == ():
                 self.status = True
+                preco = self.modelo.categorias_dvd.get_preco(dvd[0][2])
+                preco = preco[0][0]
+                listar = ([dvd[0][0] ,  dvd[0][1] , preco])
+                dvds.append(listar)
             else:
                 self.notify_text = 'ERRO : DvD cod = %s já está Alugado!'%(cod)
                 self.status = False
@@ -217,7 +229,7 @@ class Controle:
             self.notify_text = 'ERRO : DvD cod = %s não Cadastrado!'%(cod)
             self.status = False
             raise CodigoInvalido,  'Código não cadastrado'
-        return dvd
+        return dvds
 
     def cliente_devolucao(self):
         return self.cod_cliente_devolucao
@@ -225,7 +237,10 @@ class Controle:
     def dvd_listado_check(self):
         return self.listado
         
-    def listar_dvds_locados(self, cod_dvd, quant_itens,  lista):
+    def get_total_locacao(self):
+        return self.total
+        
+    def listar_dvds_locados(self, cod_dvd, lista):
         self.listado = False
         if cod_dvd != '':
             cod_dvd = self.toInt(cod_dvd)
@@ -252,7 +267,10 @@ class Controle:
                 dvds = []
                 for locado in locados:
                     dvd = self.modelo.dvds.select_dvd(locado[1])
-                    dvds.append(dvd)
+                    preco = self.modelo.categorias_dvd.get_preco(dvd[0][2])
+                    preco = preco[0][0]
+                    listar = ([dvd[0][0] ,  dvd[0][1] , preco])
+                    dvds.append(listar)
         else:
             for cods in lista:
                 cod_inlista =cods.cod
@@ -266,3 +284,21 @@ class Controle:
                 self.status = False
                 raise CodigoInvalido,  'Código invalido'
         return dvds
+
+#---caixa
+    def open_caixa(self, inicial):
+           #FixMe: get caixas default
+           caixa = 0
+           self.modelo.caixa.insert_item(caixa, inicial)
+           
+    def get_caixa_status(self):
+        status = self.modelo.caixa.locate_item()
+        if status == ():
+            return 'Closed'
+        else:
+            today = date.today()
+            if today == status[0][2]:
+                return 'Opened'
+            else:
+                return 'NotClosed'
+        

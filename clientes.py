@@ -30,11 +30,8 @@ def localizar_cliente(self, window, controle, notify):
     w_localiza_clientes.connect("destroy", lambda w: w_localiza_clientes.hide())
 
 #------Lista
-    #vpaned = gtk.VPaned()
-    #w_localiza_clientes.vbox.add(vpaned)
 
     frame_locados = gtk.Frame("Clientes")
-    #vpaned.add(frame_locados)
     w_localiza_clientes.vbox.add(frame_locados)
     
     vbox = gtk.VBox()

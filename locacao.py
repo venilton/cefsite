@@ -3,43 +3,23 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from kiwi.ui.objectlist import Column, ObjectList
+from kiwi.datatypes import currency
+from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
 
 from notify import notify_area
 from iconmenu import iconMenuItem
 from clientes import localizar_cliente
 
-def popular_lista_dvds_devolucao(widget,button_adicionar, entry_cod_dvd, entry_cod_cliente, entry_nome_cliente,  controle, data, notify_box, quant_itens, lista):
-    cod = entry_cod_dvd.get_text()
-    try:
-        dvds = controle.listar_dvds_locados(cod, quant_itens, data)
-    except:
-        pass
-    status = controle.notify()
-    if status == True:
-        listado =controle.dvd_listado_check()
-        if listado == False:
-            cod_cliente = controle.cliente_devolucao()
-            cliente = controle.listar_cliente(cod_cliente)
-            entry_cod_cliente.set_text(str(cod_cliente))
-            entry_nome_cliente.set_text(cliente[0][1])
-            
-            for dvd in dvds:
-                codigo = dvd[0][0]
-                titulo = dvd[0][1]
-                if codigo == int(cod):
-                    data.append(Dvd(codigo, titulo, True))
-                else:
-                    data.append(Dvd(codigo, titulo))
-            lista.extend(data)
-        else:
-            lista.grab_focus()
-    else:
-        notify_box.show()
-    entry_cod_dvd.set_text('')
-    entry_cod_dvd.grab_focus()
 
 class Locar:
+    class Dvd:
+        def __init__(self, cod, title, valor):
+            self.cod = cod
+            self.title = title
+            self.valor = currency(valor)
+        def __repr__(self):
+            return '<Titulo %s>' % self.title
+    
     def set_controle(self, controle):
         self.controle = controle
         
@@ -61,9 +41,8 @@ class Locar:
 
     def cadastra (self,widget):
         cod_cliente = self.entry_cod_cliente.get_text()
-        for iten in range(self.quant_itens):
-            treeiter = self.lista.get_iter(iten)
-            cod_dvd = int(self.lista.get_value(treeiter, 0))
+        for iten in self.lista:
+            cod_dvd = int(iten.cod)
             self.controle.alugar(cod_cliente, cod_dvd)
             
         status = self.controle.notify()
@@ -74,15 +53,12 @@ class Locar:
             self.controle.main_status = True
 
     def remover_item(self, w):
-        path = self.tree_view.get_cursor()
-        if path !=(None, None):
-            try:
-                treeiter = self.lista.get_iter(path[0][0])
-                self.lista.remove(treeiter)
-                self.quant_itens -= 1
-            except:
-                pass
-
+        item = self.lista.get_selected_row_number()
+        for itens in self.lista:
+            if itens == self.lista[item]:
+                self.lista.remove(itens)
+        atributo = 'cod'
+        self.lista.emit('cell-edited', self.lista, atributo)
     def popular_lista_dvds(self, w):
         cod = self.entry_cod_dvd.get_text()
         try:
@@ -91,32 +67,17 @@ class Locar:
             pass
         status = self.controle.notify()
         if status == True:
-            self.lista.append([dvd[0][0],dvd[0][1]])
-            self.quant_itens += 1
+            codigo = dvd[0][0]
+            titulo = dvd[0][1]
+            valor = dvd[0][2]
+            self.lista.append(Locar.Dvd(codigo, titulo, valor))
+            atributo = 'cod'
+            self.lista.emit('cell-edited', self.lista, atributo)
             self.notify_box.hide()
         else:
             self.notify_box.show()
         self.entry_cod_dvd.set_text('')
-        
-    def create_list(self):
-        scrolled_window = gtk.ScrolledWindow()
-        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 
-        self.lista = gtk.ListStore(str, str)
-        self.tree_view = gtk.TreeView(self.lista)
-        scrolled_window.add_with_viewport (self.tree_view)
-    
-        cell1 = gtk.CellRendererText()
-        column1 = gtk.TreeViewColumn("Codigo - Dvd", cell1, text=0)
-        
-        cell2 = gtk.CellRendererText()
-        column2 = gtk.TreeViewColumn("Titulo", cell2, text=1)
-        
-        self.tree_view.append_column(column1)
-        self.tree_view.append_column(column2)
-
-        return scrolled_window
-        
     def localizar_cliente_cod(self, widget):
         cod = self.entry_cod_cliente.get_text()
         if cod is not "":
@@ -151,6 +112,16 @@ class Locar:
         vbox_main = gtk.VBox(False, 2)
         self.w_locar.vbox.add(vbox_main)   
 
+#------Elementos
+        self.data = []
+        columns = [
+            Column('cod', data_type =int, sorted=True,  title="Código"),
+            Column('title', data_type = str, title="Titulo"),
+            Column('valor', data_type = currency, title="Valor") 
+        ]
+        self.lista = ObjectList(columns, mode=gtk.SELECTION_MULTIPLE)
+        self.lista.extend(self.data)
+    
 #------Frame Clientes
         frame_cliente = gtk.Frame("Cliente")
         vbox_main.pack_start(frame_cliente, False, True, 2)
@@ -215,16 +186,18 @@ class Locar:
         bbox.add(button_adicionar)
         bbox.add(button_remover)
 
-#------lista de filmes
-        vpaned = gtk.VPaned()
-        hbox_body.pack_start(vpaned, True, True, 2)
-        
+#------lista de filmes       
         frame_filmes = gtk.Frame("Lista de Locações")
-        vpaned.add(frame_filmes)
+        hbox_body.pack_start(frame_filmes, True, True, 2)
+        vbox_lista = gtk.VBox(False, 2)
 
-        liststore = self.create_list()
-        frame_filmes.add(liststore)
+        frame_filmes.add(vbox_lista)
+        vbox_lista.pack_start(self.lista, True, True, 2)
         
+        label = SummaryLabel(klist=self.lista, column='valor', label='<b>Total:</b>',
+                     value_format='<b>%s</b>')
+        vbox_lista.pack_start(label, False, False, 4)
+
 #-------area de notificacao
         vbox_main.pack_start(self.notify_box, False, True, 2)
 
@@ -248,37 +221,63 @@ class Locar:
         self.w_locar.show_all()
         self.notify_box.hide()
         self.w_locar.show()
-#-----------------------------------------------------
-class Dvd:
-    def __init__(self, cod, title, check = False):
-        self.check = check
-        self.cod = cod
-        self.title = title
 
-    def __repr__(self):
-        return '<Titulo %s>' % self.title
-#----------------------------------------------------------
+
 class Devolver:
+    class Dvd:
+        def __init__(self, cod, title, valor, check = False):
+            self.check = check
+            self.cod = cod
+            self.title = title
+            self.valor = currency(valor)
+
+        def __repr__(self):
+            return '<Titulo %s>' % self.title   
+        
+    def popular_lista_dvds_devolucao(self, widget):
+        cod = self.entry_cod_dvd.get_text()
+        try:
+            dvds = self.controle.listar_dvds_locados(cod, self.data)
+        except:
+            pass
+        status = self.controle.notify()
+        if status == True:
+            listado =self.controle.dvd_listado_check()
+            if listado == False:
+                cod_cliente = self.controle.cliente_devolucao()
+                cliente = self.controle.listar_cliente(cod_cliente)
+                self.entry_cod_cliente.set_text(str(cod_cliente))
+                self.entry_nome_cliente.set_text(cliente[0][1])
+                
+                for dvd in dvds:
+                    codigo = dvd[0]
+                    titulo = dvd[1]
+                    valor = dvd[2]
+                    if codigo == int(cod):
+                        self.data.append(Devolver.Dvd(codigo, titulo, valor, True))
+                    else:
+                        self.data.append(Devolver.Dvd(codigo, titulo, valor))
+                self.lista.extend(self.data)
+                atributo = 'check'
+                self.lista.emit('cell-edited', self.lista, atributo)
+            else:
+                self.lista.grab_focus()#fixMe
+                atributo = 'check'
+                self.lista.emit('cell-edited', self.lista, atributo)
+                #lista.emit('selection-changed', lista)
+            self.notify_box.hide()
+        else:
+            self.notify_box.show()
+        self.entry_cod_dvd.set_text('')
+        self.entry_cod_dvd.grab_focus()
+        
     def set_controle(self, controle):
         self.controle = controle
-    
-    def close_notification(self, widget):
-        self.hboxnotify.hide()
-        
+
     def close(self,w):
         self.controle.main_status = False
         self.w_devolver.destroy()
     
-    def remover_item(self, w):
-        path = self.tree_view.get_cursor()
-        if path !=(None, None):
-            try:
-                treeiter = self.lista.get_iter(path[0][0])
-                self.lista.remove(treeiter)
-                self.quant_itens -= 1
-            except:
-                pass
-
     def cadastra (self, widget, entry_dvd):
         for dvd in self.data:
             if dvd.check ==True:
@@ -310,9 +309,10 @@ class Devolver:
         columns = [
             Column('check', data_type=bool, editable=True, title="Conferido"), 
             Column('cod', data_type =int, sorted=True,  title="Código"),
-            Column('title', data_type = str, title="Titulo")
+            Column('title', data_type = str, title="Titulo"),
+            Column('valor', data_type = currency, title="Valor") 
         ]
-        self.lista = ObjectList(columns, mode=gtk.SELECTION_MULTIPLE)
+        self.lista = ObjectList(columns, mode=gtk.SELECTION_NONE)
         self.lista.extend(self.data)
 
 #------Divisao v principal
@@ -366,12 +366,12 @@ class Devolver:
         f_dvd.put(label_cod_dvd, 2, 8)
         self.entry_cod_dvd = gtk.Entry(0)
         self.entry_cod_dvd.set_size_request(60,28)
-        self.entry_cod_dvd.connect("activate", popular_lista_dvds_devolucao, button_adicionar, self.entry_cod_dvd, self.entry_cod_cliente, self.entry_nome_cliente,  self.controle, self.data, self.notify_box, self.quant_itens, self.lista)
+        self.entry_cod_dvd.connect("activate", self.popular_lista_dvds_devolucao)
         f_dvd.put(self.entry_cod_dvd, 60, 4)
         
         vbox_dvd.pack_start(f_dvd, False, True, 4)
         
-        button_adicionar.connect("clicked", popular_lista_dvds_devolucao, button_adicionar, self.entry_cod_dvd, self.entry_cod_cliente, self.entry_nome_cliente,  self.controle, self.data, self.notify_box, self.quant_itens, self.lista)
+        button_adicionar.connect("clicked", self.popular_lista_dvds_devolucao)
 
         bbox = gtk.VButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_START)
@@ -379,14 +379,17 @@ class Devolver:
         bbox.add(button_adicionar)
 
 #------lista de filmes
-        vpaned = gtk.VPaned()
-        hbox_body.pack_start(vpaned, True, True, 2)
-        
         frame_filmes = gtk.Frame("Lista de Locações")
-        vpaned.add(frame_filmes)
+        hbox_body.pack_start(frame_filmes, True, True, 2)
+        vbox_lista = gtk.VBox(False, 2)
 
-        frame_filmes.add(self.lista)
-
+        frame_filmes.add(vbox_lista)
+        vbox_lista.pack_start(self.lista, True, True, 2)
+        
+        label = SummaryLabel(klist=self.lista, column='valor', label='<b>Saldo Devedor:</b>',
+                     value_format='<b>%s</b>')
+        vbox_lista.pack_start(label, False, False, 4)
+        
 #-------area de notificacao
         vbox_main.pack_start(self.notify_box,False, True, 4)
 
@@ -409,3 +412,156 @@ class Devolver:
         self.w_devolver.show_all()
         self.notify_box.hide()
         self.w_devolver.show()
+        
+class Locados:    
+    def close(self,w):
+        self.w_locados.destroy()
+
+    def create_list(self):
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+        lista = gtk.ListStore(str, str, str, str)
+        tree_view = gtk.TreeView(lista)
+        scrolled_window.add_with_viewport (tree_view)
+    
+        locados = self.controle.listar_locados()
+
+        for locado in locados:
+            codvd = str(locado[1])
+            titulo = self.controle.listar_titulo_filme(codvd)
+            dvd = str(codvd) +' - '+ titulo[0][1]
+            codcliente = str(locado[2])
+            nome = self.controle.listar_cliente(codcliente)
+            cliente = str(codcliente) + '-' + nome[0][1]
+            retirada = locado[3]
+            devolucao = locado[4]
+            lista.append([dvd, cliente, retirada , devolucao])
+           
+        cell1 = gtk.CellRendererText()
+        column1 = gtk.TreeViewColumn("Codigo - Dvd", cell1, text=0)
+        
+        cell2 = gtk.CellRendererText()
+        column2 = gtk.TreeViewColumn("Codigo - Cliente", cell2, text=1)
+        
+        cell3 = gtk.CellRendererText()
+        column3 = gtk.TreeViewColumn("Retirada", cell3, text=2)
+        
+        cell4 = gtk.CellRendererText()
+        column4 = gtk.TreeViewColumn("Devolver em", cell4, text=3)
+        tree_view.append_column(column1)
+        tree_view.append_column(column2)
+        tree_view.append_column(column3)
+        tree_view.append_column(column4)
+
+        return scrolled_window
+   
+    def __init__(self,controle):
+        self.w_locados = gtk.Dialog()
+        self.w_locados.set_position(gtk.WIN_POS_CENTER)
+        self.w_locados.connect("destroy", self.close)
+        self.w_locados.set_title("CEF SHOP - Locados")
+        self.w_locados.set_size_request(650,350)
+        self.w_locados.set_border_width(8)
+        self.controle = controle
+  
+#------Lista
+        vpaned = gtk.VPaned()
+        self.w_locados.vbox.add(vpaned)
+
+        frame_locados = gtk.Frame("Dvds atualmente Alugados ")
+        vpaned.add(frame_locados)
+
+        liststore = self.create_list()
+        frame_locados.add(liststore)
+
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+        
+        bbox = gtk.HButtonBox ()
+        bbox.set_layout(gtk.BUTTONBOX_END)
+        self.w_locados.action_area.pack_start(bbox, False, True, 0)
+        
+        bbox.add(button_close)
+        button_close.set_flags(gtk.CAN_DEFAULT)
+
+        self.w_locados.show_all()
+        self.w_locados.show()
+
+class Atrasados:
+    def close(self,w):
+        self.w_atrasados.destroy()
+
+    def create_list(self):
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+        lista = gtk.ListStore(str, str, str, str)
+        tree_view = gtk.TreeView(lista)
+        scrolled_window.add_with_viewport (tree_view)
+
+        atrasados = self.controle.listar_atrasados()
+        
+        for locado in atrasados:
+            codvd = str(locado[1])
+            titulo = self.controle.listar_titulo_filme(codvd)
+            dvd = str(codvd) +' - '+ titulo[0][1]
+            codcliente = str(locado[2])
+            nome = self.controle.listar_cliente(codcliente)
+            cliente = str(codcliente) + '-' + nome[0][1]
+            retirada = locado[3]
+            devolucao = locado[4]
+            lista.append([dvd, cliente, retirada , devolucao])
+            
+        cell1 = gtk.CellRendererText()
+        column1 = gtk.TreeViewColumn("Cod Dvd", cell1, text=0)
+        
+        cell2 = gtk.CellRendererText()
+        column2 = gtk.TreeViewColumn("Cod Cliente", cell2, text=1)
+        
+        cell3 = gtk.CellRendererText()
+        column3 = gtk.TreeViewColumn("Retirada", cell3, text=2)
+        
+        cell4 = gtk.CellRendererText()
+        column4 = gtk.TreeViewColumn("Atrasado desde", cell4, text=3)
+        
+        tree_view.append_column(column1)
+        tree_view.append_column(column2)
+        tree_view.append_column(column3)
+        tree_view.append_column(column4)
+
+        return scrolled_window
+   
+    def __init__(self, controle):
+        self.w_atrasados = gtk.Dialog()
+        self.w_atrasados.set_position(gtk.WIN_POS_CENTER)
+        self.w_atrasados.connect("destroy", self.close)
+        self.w_atrasados.set_title("CEF SHOP - Locados")
+        self.w_atrasados.set_size_request(650,350)
+        self.w_atrasados.set_border_width(8)
+        self.controle = controle
+
+#------Lista
+        vpaned = gtk.VPaned()
+        self.w_atrasados.vbox.add(vpaned)
+
+        frame_locados = gtk.Frame("Dvds atualmente Alugados ")
+        vpaned.add(frame_locados)
+
+        liststore = self.create_list()
+        frame_locados.add(liststore)
+
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+        
+        bbox = gtk.HButtonBox ()
+        bbox.set_layout(gtk.BUTTONBOX_END)
+        self.w_atrasados.action_area.pack_start(bbox, False, True, 0)
+        
+        bbox.add(button_close)
+        button_close.set_flags(gtk.CAN_DEFAULT)
+
+        self.w_atrasados.show_all()
+        self.w_atrasados.show()

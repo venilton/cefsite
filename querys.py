@@ -23,10 +23,12 @@ class Modelo:
         self.clientes = Cliente(bd, cursor, 'clientes')
         self.filmes = Filme(bd, cursor, 'filme')
         self.generos = Genero(bd, cursor, 'generodvd')
+        self.categorias_dvd = Categoria_dvd(bd, cursor, 'categoria_dvd')
         self.dvds = DVD(bd, cursor, 'dvd')
         self.locados = Locacao(bd, cursor, 'locados')
 
-        self.caixas = Caixa(bd, cursor, 'caixa')
+        self.caixas = Caixas(bd, cursor, 'caixas')
+        self.caixa = Caixa(bd, cursor, 'caixa')
         self.categorias = Categoria(bd, cursor, 'categoria')
         self.produtos = Produto(bd, cursor, 'produto')
         self.estoque = Estoque(bd, cursor, 'estoque')
@@ -154,8 +156,8 @@ class Cliente(Tabela):
     def select_cliente(self, cod):
         return self.runQuery("SELECT * FROM clientes WHERE cod_cliente=%s", [cod])
 
-class Caixa(Tabela):
-    def __init__(self, bd, cursor, nome_tabela='caixa'):
+class Caixas(Tabela):
+    def __init__(self, bd, cursor, nome_tabela='caixas'):
         Tabela.__init__(self, bd, cursor, nome_tabela)
         self.all_fields = ['cod_caixa', 'nome', 'faturar']
 
@@ -167,33 +169,44 @@ class Caixa(Tabela):
         self.insert(campos)
         return self.lastInsertId()
 
-    def update_item(self, cod_caixa, nome, faturar):
+class Caixa(Tabela):
+    def __init__(self, bd, cursor, nome_tabela='caixa'):
+        Tabela.__init__(self, bd, cursor, nome_tabela)
+        self.all_fields = ['cod_caixa', 'data_abertura', 'data_fechamento', 'saldo_inicial', 'saldo_total']
+
+    def insert_item(self, cod_caixa, saldo_inicial):
+        self.runSql('INSERT INTO caixa (cod_caixa, data_abertura, saldo_inicial) VALUES (%s, CURDATE(), %s)', (cod_caixa, saldo_inicial))
+        return self.lastInsertId()
+
+    def update_item(self, id, data_fechamento, saldo_total):
         campos = {}
-        if nome is not None:		campos['nome'] = nome
-        if faturar is not None:		campos['faturar'] = faturar
-
-        return self.update(campos, {'cod_caixa': cod_caixa })
-
-    def locate_item(self, name):
-        return self.runQuery("SELECT * FROM caixa WHERE nome like '%%%s%%'" % (name))
-
+        if data_fechamento is not None:		campos['data_fechamento'] = data_fechamento
+        if saldo_total is not None:		campos['saldo_total'] = saldo_total
+        
+        return self.update(campos, {'id': id })
+        
+    def locate_item(self):
+        return self.runQuery('SELECT * FROM caixa WHERE data_fechamento is NULL' )
+        
 class Filme(Tabela):
     def __init__(self, bd, cursor, nome_tabela='filme'):
         Tabela.__init__(self, bd, cursor, nome_tabela)
-        self.all_fields = ['cod_filme', 'cod_genero', 'titulo', 'quantidade']
+        self.all_fields = ['cod_filme', 'cod_genero', 'cod_categoria','titulo', 'quantidade']
 
-    def insert_item(self, cod_genero, titulo, quantidade):
+    def insert_item(self, cod_genero, cod_categoria_dvd, titulo, quantidade):
         campos = {}
         if cod_genero is not None:	campos['cod_genero'] = cod_genero
+        if cod_categoria_dvd is not None:	campos['cod_categoria'] = cod_categoria_dvd
         if titulo is not None:		campos['titulo'] = titulo
         if quantidade is not None:	campos['quantidade'] = quantidade
 
         self.insert(campos)
         return self.lastInsertId()
 
-    def update_item(self, cod_filme, cod_genero, titulo, quantidade):
+    def update_item(self, cod_filme, cod_genero, cod_categoria_dvd, titulo, quantidade):
         campos = {}
         if cod_genero is not None:	campos['cod_genero'] = cod_genero
+        if cod_categoria_dvd is not None:	campos['cod_categoria'] = cod_categoria_dvd
         if titulo is not None:		campos['titulo'] = titulo
         if quantidade is not None:	campos['quantidade'] = quantidade
 
@@ -201,6 +214,7 @@ class Filme(Tabela):
 
     def locate_item(self, name):
         return self.runQuery("SELECT * FROM filme WHERE nome like '%%%s%%'" % (name))
+        
 
 class Genero(Tabela):
     def __init__(self, bd, cursor, nome_tabela='generodvd'):
@@ -229,6 +243,37 @@ class Genero(Tabela):
     def select_genero_desc(self, descricao):
         return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
 
+class Categoria_dvd(Tabela):
+    def __init__(self, bd, cursor, nome_tabela='categoria_dvd'):
+        Tabela.__init__(self, bd, cursor, nome_tabela)
+        self.all_fields = ['cod_categoria', 'descricao', 'preco']
+
+    def insert_item(self, descricao, preco):
+        campos = {}
+        if descricao is not None:	campos['descricao'] = descricao
+        if preco is not None:	campos['preco'] = preco
+        self.insert(campos)
+        return self.lastInsertId()
+
+    def update_item(self, descricao, preco):
+        campos = {}
+        if descricao is not None:	campos['descricao'] = descricao
+        if preco is not None:	campos['preco'] = preco
+
+        return self.update(campos, {'cod_genero': cod_genero })
+
+    def locate_item(self, descricao):
+        return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao like '%%%s%%'" % (descricao))
+
+    def select_categoria_dvd(self, cod):
+        return self.runQuery("SELECT * FROM categoria_dvd WHERE cod_categoria=%s", [cod])
+    
+    def select_categoria_desc(self, descricao):
+        return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao=%s", [descricao])
+
+    def get_preco(self, cod):
+        return self.runQuery("SELECT preco FROM categoria_dvd WHERE cod_categoria=%s", [cod])
+
 class DVD(Tabela):
     def __init__(self, bd, cursor, nome_tabela='dvd'):
         Tabela.__init__(self, bd, cursor, nome_tabela)
@@ -248,7 +293,7 @@ class DVD(Tabela):
         return self.update(campos, {'cod_dvd': cod_dvd })
 
     def select_dvd(self, cod):
-        return self.runQuery("SELECT d.cod_dvd, f.titulo FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
+        return self.runQuery("SELECT d.cod_dvd, f.titulo, f.cod_categoria FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
 
 class Locacao(Tabela):
     def __init__(self, bd, cursor, nome_tabela='locados'):
