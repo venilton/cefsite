@@ -1,4 +1,4 @@
-# -*- coding: latin-1 -*-
+Ôªø# -*- coding: utf-8 -*-
 
 from querys import *
 
@@ -44,7 +44,7 @@ def prompt_table(plural, campo_codigo, campos, tabela, func_select = None, func_
             if func_update:
                 func_update()
             else:
-                cod = raw_input('CÛdigo: ')
+                cod = raw_input('C√≥digo: ')
                 info = {}
                 for campo in campos:
                     conteudo = raw_input(campo + ': ')
@@ -71,7 +71,7 @@ def prompt_table(plural, campo_codigo, campos, tabela, func_select = None, func_
             rep = 0
 
 def not_implemented():
-    print "FunÁ„o n„o implementada.\n"
+    print "Fun√ß√£o n√£o implementada.\n"
 
 def insert_filme():
     info = {}
@@ -94,6 +94,11 @@ def prompt_clientes():
     campos = tabela.all_fields[1:]
     prompt_table('clientes', tabela.all_fields[0], campos, tabela)
 
+def prompt_categoria_dvd():
+    tabela = query.categoria_dvd
+    campos = tabela.all_fields[1:]
+    prompt_table('categorias', tabela.all_fields[0], campos, tabela)
+
 def prompt_filmes():
     tabela = query.filmes
     campos = tabela.all_fields[1:]
@@ -102,17 +107,17 @@ def prompt_filmes():
 def prompt_generos():
     tabela = query.generos
     campos = tabela.all_fields[1:]
-    prompt_table('gÍneros', tabela.all_fields[0], campos, tabela)
+    prompt_table('g√™neros', tabela.all_fields[0], campos, tabela)
 
 def prompt_dvds():
     tabela = query.dvds
     campos = tabela.all_fields[1:]
     prompt_table('DVDs', tabela.all_fields[0], campos, tabela, func_locate=not_implemented)
 
-def prompt_caixas():
-    tabela = query.caixas
+def prompt_contas():
+    tabela = query.contas
     campos = tabela.all_fields[1:]
-    prompt_table('caixas', tabela.all_fields[0], campos, tabela)
+    prompt_table('conta', tabela.all_fields[0], campos, tabela)
 
 def prompt_categorias():
     tabela = query.categorias
@@ -127,7 +132,7 @@ def prompt_produtos():
 def prompt_locados():
     rep = 1
     while rep:
-        print """\nLOCA«√O
+        print """\nLOCA√á√ÉO
     a) Listar locados
     b) Alugar
     c) Devolver
@@ -143,24 +148,24 @@ def prompt_locados():
                     line += "%s, " % col
                 print line[:-2]
 
-            print "\n LocaÁıes encontradas: %d" % len(rows)
+            print "\n Loca√ß√µes encontradas: %d" % len(rows)
 
         elif op == 'b':
             cod_cliente = raw_input('Cliente: ')
-            cod_dvd = int(raw_input('CÛdigo do DVD: '))
+            cod_dvd = int(raw_input('C√≥digo do DVD: '))
 
             locado = query.locados.locate_locados(cod_dvd)
             if locado:
-                print "DVD j· esta alugado\n"
+                print "DVD j√° esta alugado\n"
             else:
                 dias = 7
                 query.locados.insert_locacao(cod_cliente, cod_dvd, dias)
 
         elif op == 'c':
-            cod_dvd = int(raw_input('CÛdigo do DVD: '))
+            cod_dvd = int(raw_input('C√≥digo do DVD: '))
             idcod = locate_locados(cod_dvd)
             query.locados.insert_devolucao(idcod)
-            print "DevoluÁ„o OK"
+            print "Devolu√ß√£o OK"
 
         elif op == 'd':
             rows = query.locados.select_locados_atrasados()
@@ -170,7 +175,7 @@ def prompt_locados():
                     line += "%s, " % col
                 print line[:-2]
 
-            print "\n LocaÁıes atrasadas: %d" % len(rows)
+            print "\n Loca√ß√µes atrasadas: %d" % len(rows)
 
         else:
             rep = 0
@@ -181,83 +186,130 @@ def prompt_estoque():
         print """\nESTOQUE
     a) Consultar estoque
     b) Entrada
-    c) SaÌda
+    c) Sa√≠da
     [Enter] para voltar"""
 
         op = raw_input()
         if op == 'a':
             cod_produto = raw_input('Produto: ')
-            localiz = raw_input('LocalizaÁ„o: ')
+            localiz = raw_input('Localiza√ß√£o: ')
             quant = query.estoque.get_estoque(cod_produto, localiz)
             if quant:
                 print "%d encontrado." % quant
             else:
-                print "Produto n„o est· no estoque.\n"
+                print "Produto n√£o est√° no estoque.\n"
 
         elif op == 'b':
             cod_produto = raw_input('Produto: ')
-            localiz = raw_input('LocalizaÁ„o: ')
+            localiz = raw_input('Localiza√ß√£o: ')
             quant = raw_input('Quantidade: ')
             query.estoque.add_estoque(cod_produto, localiz, quant)
             print "Adicionado.\n"
 
         elif op == 'c':
             cod_produto = raw_input('Produto: ')
-            localiz = raw_input('LocalizaÁ„o: ')
+            localiz = raw_input('Localiza√ß√£o: ')
             quant = raw_input('Quantidade: ')
             try:
                 query.estoque.baixa_estoque(cod_produto, localiz, quant)
                 print "Retirado do estoque.\n"
             except:
                 print "Erro na retirada do estoque."
-            
+
+        else:
+            rep = 0
+
+#--------------------------------------------------------------------
+
+def auto_insert():
+    print "Inserindo..."
+    query.cursor.execute("insert into conta(nome, faturar) values (%s, %s)", ('Padr√£o', 100))
+    codconta = query.last_insert_id()
+
+    query.cursor.execute("insert into categoria(cod_conta_padrao, nome, tipo) values (%s, %s, %s)", (codconta, 'Camisetas', 1))
+    codcategoria1 = query.last_insert_id()
+    query.cursor.execute("insert into categoria(cod_conta_padrao, nome, tipo) values (%s, %s, %s)", (codconta, 'Livros', 2))
+    codcategoria2 = query.last_insert_id()
+
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paix√£o, Fogo e Gl√≥ria - Liberdade', 25.0, 'P', 1))
+    codproduto = query.last_insert_id()
+    query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 5))
+
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paix√£o, Fogo e Gl√≥ria - Liberdade', 25.0, 'M', 1))
+    codproduto = query.last_insert_id()
+    query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 5))
+
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paix√£o, Fogo e Gl√≥ria - Liberdade', 25.0, 'G', 1))
+    codproduto = query.last_insert_id()
+    query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 5))
+
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, autor, editora, ativo) values (%s, %s, %s, %s, %s, %s, %s)", (codcategoria2, 'Bom dia, Esp√≠rito Santo', 'Livro que fala sobre...', 22.0, 'Benny Hinn', 'Editora', 1))
+    codproduto = query.last_insert_id()
+    query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 3))
+
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, autor, editora, ativo) values (%s, %s, %s, %s, %s, %s, %s)", (codcategoria2, 'Os ca√ßadores de Deus', 'Livro que fala sobre...', 18.0, 'Tommy Tenney', 'Editora', 1))
+    codproduto = query.last_insert_id()
+    query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 3))
+
+    query.cursor.execute("insert into clientes(nome) values (%s)", ('Cliente padr√£o'))
+
+    query.bd.commit()
+
+    print "Pronto."
 
 #--------------------------------------------------------------------
 
 while (1):
     print """
-    Digite:
+1 - Clientes
+2 - G√™neros
+3 - Categoria de DVD
+4 - Filmes
+5 - DVDs
+6 - Loca√ß√µes
 
-    1 - Clientes
-    2 - GÍneros
-    3 - Filmes
-    4 - DVDs
-    5 - LocaÁıes
+7 - Contas
+8 - Categorias
+9 - Produtos
+10 - Estoque
 
-    6 - Caixas
-    7 - Categorias
-    8 - Produtos
-    9 - Estoque
+A - Auto insert
+0 - Sair
+Op√ß√£o: """
 
-    0 - Sair	
-    """
-    op=raw_input()
+    op=raw_input().upper()
     if op=='1': # Clientes
         prompt_clientes()
 
-    elif op=='2': # GÍneros
+    elif op=='2': # G√™neros
         prompt_generos()
 
-    elif op=='3': # Filmes
+    elif op=='3': # Categoria DVD
+        prompt_categoria_dvd()
+
+    elif op=='4': # Filmes
         prompt_filmes()
 
-    elif op=='4': # DVD
+    elif op=='5': # DVD
         prompt_dvds()
 
-    elif op=='5': # LocaÁıes
+    elif op=='6': # Loca√ß√µes
         prompt_locados()
 
-    elif op=='6': # Caixa
-        prompt_caixas()
+    elif op=='7': # Conta
+        prompt_contas()
 
-    elif op=='7': # Categorias
+    elif op=='8': # Categorias
         prompt_categorias()
 
-    elif op=='8': # Produtos
+    elif op=='9': # Produtos
         prompt_produtos()
 
-    elif op=='9': # Estoque
+    elif op=='10': # Estoque
         prompt_estoque()
+
+    elif op=='A': # Auto insert
+        auto_insert()
 
     else:
         if op=='0':

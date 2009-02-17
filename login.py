@@ -6,6 +6,7 @@ import gtk
 
 from loja import Loja
 from admin import Admin
+from caixa import Abertura
 from iconmenu import iconMenuItem
 
 class Login:
@@ -30,8 +31,16 @@ class Login:
         gtk.main_quit()
     
     def open_loja (self, widget):
-        Loja(self.controle)
-        self.w_login.hide()
+        caixa_status = self.controle.get_caixa_status()
+        if caixa_status == 'Opened':
+            Loja(self.controle)
+            self.w_login.hide()
+        else:# caixa_status == 'Closed':
+            Abertura(self.controle)
+            Loja(self.controle)
+            self.w_login.hide()
+        #if caixa_status == 'NotClosed':
+            #abrir interface de adm do caixa para fechamento
 
     def open_admin (self, widget):
         Admin(self.controle)

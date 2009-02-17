@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------
+(08/02/09) marcos_venilton@yahoo.com.br
+-------------------------------------------------------------------------
+adicionado modulo caixa
+tabela caixa renomeada para caixas
+corrigido bugs no notify (retirada e devolucao)
+implementada categorias e rotinas de precos para locacao
+-------------------------------------------------------------------------
 (25/01/09) marcos_venilton@yahoo.com.br
 -------------------------------------------------------------------------
 adicionado modulo clientes e locacao
