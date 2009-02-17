@@ -32,15 +32,14 @@ class Login:
     
     def open_loja (self, widget):
         caixa_status = self.controle.get_caixa_status()
-        if caixa_status == 'Opened':
-            Loja(self.controle)
-            self.w_login.hide()
-        else:# caixa_status == 'Closed':
+        if caixa_status == 'Closed':
             Abertura(self.controle)
-            Loja(self.controle)
-            self.w_login.hide()
-        #if caixa_status == 'NotClosed':
-            #abrir interface de adm do caixa para fechamento
+        if caixa_status == 'NotClosed':
+            self.controle.close_caixa()
+            Abertura(self.controle)
+            
+        Loja(self.controle)
+        self.w_login.hide()
 
     def open_admin (self, widget):
         Admin(self.controle)

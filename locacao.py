@@ -9,6 +9,7 @@ from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
 from notify import notify_area
 from iconmenu import iconMenuItem
 from clientes import localizar_cliente
+from receber import Receber
 
 
 class Locar:
@@ -39,18 +40,25 @@ class Locar:
             self.sensitive(True)
             self.entry_cod_dvd.grab_focus()
 
-    def cadastra (self,widget):
-        cod_cliente = self.entry_cod_cliente.get_text()
-        for iten in self.lista:
-            cod_dvd = int(iten.cod)
-            self.controle.alugar(cod_cliente, cod_dvd)
-            
-        status = self.controle.notify()
-        if status == True:
-                self.notify_box.show()
-        else:
-            self.w_locar.hide()
-            self.controle.main_status = True
+    def receber (self,  widget):
+        itens = self.controle.receber_locacao(self.lista)
+        Receber(self.controle, self.w_locar, itens)
+        
+    def cadastra (self, widget, focus):
+        recebido = self.controle.get_receber_status()
+        if recebido == True:
+            self.controle.set_receber_status(False)
+            cod_cliente = self.entry_cod_cliente.get_text()
+            for iten in self.lista:
+                cod_dvd = int(iten.cod)
+                self.controle.alugar(cod_cliente, cod_dvd)
+                
+            status = self.controle.notify()
+            if status == True:
+                    self.notify_box.show()
+            else:
+                self.w_locar.hide()
+                self.controle.main_status = True
 
     def remover_item(self, w):
         item = self.lista.get_selected_row_number()
@@ -59,6 +67,7 @@ class Locar:
                 self.lista.remove(itens)
         atributo = 'cod'
         self.lista.emit('cell-edited', self.lista, atributo)
+        
     def popular_lista_dvds(self, w):
         cod = self.entry_cod_dvd.get_text()
         try:
@@ -100,6 +109,7 @@ class Locar:
         self.w_locar = gtk.Dialog()
         self.w_locar.set_position(gtk.WIN_POS_CENTER)
         self.w_locar.connect("destroy", self.close)
+        self.w_locar.connect("focus_in_event", self.cadastra)
         self.w_locar.connect("focus_in_event", self.localizado)
         self.w_locar.set_title("CEF SHOP - Locar")
         self.w_locar.set_size_request(650,400)
@@ -205,7 +215,7 @@ class Locar:
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
-        button_ok.connect("clicked", self.cadastra)
+        button_ok.connect("clicked", self.receber)
 
         bbox = gtk.HButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_END)
@@ -264,7 +274,7 @@ class Devolver:
                 self.lista.grab_focus()#fixMe
                 atributo = 'check'
                 self.lista.emit('cell-edited', self.lista, atributo)
-                #lista.emit('selection-changed', lista)
+                self.lista.refresh(False)
             self.notify_box.hide()
         else:
             self.notify_box.show()

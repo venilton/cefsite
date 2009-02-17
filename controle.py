@@ -8,6 +8,8 @@ from datetime import date
 from querys import Modelo , Caixa
 from login import Login
 
+
+
 #Exceções
 class ControleError(Exception): pass
 class EmBranco(ControleError):pass
@@ -20,6 +22,8 @@ class Controle:
         self.notify_text = ''
         self.cliente_encontrado = False
         self.dadoscliente = [0][0]
+        self.itens = []
+        self.recebido = False
     
     def set_modelo(self, modelo):
         self.modelo = modelo
@@ -35,7 +39,17 @@ class Controle:
         
     def logoff(self):        
         self.interface.w_login.show()
-     
+
+    def toInt(self, cod):
+        try:
+            cod = int(cod)
+        except:
+            self.notify_text = 'ERRO : campo CÓDIGO deve conter apenas números!'
+            self.status = False
+            raise CodigoInvalido , 'Código deve conter apenas números'
+        return cod
+
+#notificacao
     def get_notify_label(self, notify_label):
             self.notify_label = notify_label
     
@@ -58,16 +72,8 @@ class Controle:
             return True
         else:
             return False
-            
-    def toInt(self, cod):
-        try:
-            cod = int(cod)
-        except:
-            self.notify_text = 'ERRO : campo CÓDIGO deve conter apenas números!'
-            self.status = False
-            raise CodigoInvalido , 'Código deve conter apenas números'
-        return cod
-        
+
+#clientes
     def cliente_localizado(self):
         if self.cliente_encontrado == True:
             self.cliente_encontrado = False
@@ -104,6 +110,7 @@ class Controle:
         self.status = True
         return rows
     
+#locacao
     def alugar(self, cod_cliente, cod_dvd):
         cod_caixa = int(0)
         today = date.today()
@@ -291,14 +298,31 @@ class Controle:
            caixa = 0
            self.modelo.caixa.insert_item(caixa, inicial)
            
+    def close_caixa(self):
+           self.modelo.caixa.update_item(self.status[0][0], date.today)
+
     def get_caixa_status(self):
-        status = self.modelo.caixa.locate_item()
-        if status == ():
+        self.status = self.modelo.caixa.locate_item()
+        if self.status == ():
             return 'Closed'
         else:
             today = date.today()
-            if today == status[0][2]:
+            if today == self.status[0][2]:
                 return 'Opened'
             else:
                 return 'NotClosed'
+
+#recebimento
+    def receber_locacao(self, lista):
+        self.itens = []
+        for iten in lista:
+            self.itens.append([iten.title , iten.valor])
+        return self.itens
+        
+    def set_receber_status(self, recebido):
+        self.recebido = recebido
+        
+    def get_receber_status(self):
+        return self.recebido
+        
         

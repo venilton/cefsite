@@ -178,11 +178,9 @@ class Caixa(Tabela):
         self.runSql('INSERT INTO caixa (cod_caixa, data_abertura, saldo_inicial) VALUES (%s, CURDATE(), %s)', (cod_caixa, saldo_inicial))
         return self.lastInsertId()
 
-    def update_item(self, id, data_fechamento, saldo_total):
+    def update_item(self, id, data_fechamento):
         campos = {}
         if data_fechamento is not None:		campos['data_fechamento'] = data_fechamento
-        if saldo_total is not None:		campos['saldo_total'] = saldo_total
-        
         return self.update(campos, {'id': id })
         
     def locate_item(self):
