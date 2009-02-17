@@ -1,12 +1,14 @@
-# coding: utf-8
+#coding: utf-8
 
 import pygtk
 pygtk.require('2.0')
 import gtk
+from controle import *
 from notify import notify_area
 from iconmenu import iconMenuItem
 from clientes import Cadastro_clientes
 from locacao import Locar, Devolver
+from guicommon import SelectDialog
 
 class Loja:   
     def createMenus(self, vbox, window):
@@ -43,7 +45,11 @@ class Loja:
     def open_locar(self, widget):
         Locar(self.controle)
         self.close_notification(widget)
-        
+
+    def open_venda(self, widget):
+        Venda(self.controle)
+        self.close_notification(widget)
+
     def open_devolver(self, widget):
         Devolver(self.controle)
         self.close_notification(widget)
@@ -75,7 +81,7 @@ class Loja:
         button_devolucao.connect("clicked",self.open_devolver)
    
         button_venda = gtk.Button("Venda")
-        #button_venda.connect("clicked", , None)
+        button_venda.connect("clicked", self.open_venda)
 
 #------Divisao v principal
         vbox_main = gtk.VBox(False, 2)
@@ -141,3 +147,139 @@ class Loja:
         self.w_loja.show_all()
         self.notify_box.hide()
         self.w_loja.show()
+
+class Venda:
+    """ Janela de venda de produtos. """
+
+    def __init__(self, controle):
+        self.controle = controle
+        self.w_venda = gtk.Dialog()
+        self.w_venda.set_position(gtk.WIN_POS_CENTER)
+        self.w_venda.connect("destroy", self.close)
+        self.w_venda.set_title("CEF SHOP - Venda")
+        self.w_venda.set_border_width(8)
+        
+        hbox_main = gtk.HBox(False, 2)
+        self.notebook = gtk.Notebook()
+        self.notebook.set_tab_pos(gtk.POS_TOP)
+        hbox_main.add(self.notebook)
+        self.newpage()
+
+        #-Botões
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+        button_close.set_flags(gtk.CAN_DEFAULT)
+        button_close.grab_default()
+        button_novo = gtk.Button(stock=gtk.STOCK_NEW)
+        #button_novo.connect("clicked", self.cadastra,entry_dvd)
+        button_save = gtk.Button(stock=gtk.STOCK_SAVE)
+        #button_save.connect("clicked", self.cadastra,entry_dvd)
+        button_cancel = gtk.Button(stock=gtk.STOCK_DELETE)
+
+        bbox = gtk.HButtonBox()
+        bbox.set_layout(gtk.BUTTONBOX_END)
+
+        bbox.add(button_novo)
+        bbox.add(button_save)
+        bbox.add(button_cancel)
+        bbox.add(button_close)
+
+        self.w_venda.action_area.pack_start(bbox, False, True, 0)
+        self.w_venda.vbox.add(hbox_main)
+
+        self.w_venda.show_all()
+        #self.notify_box.hide()
+        self.w_venda.show()
+
+    def close(self, widget):
+        self.controle.main_status = False
+        self.w_venda.destroy()
+    
+    def newpage(self):
+        """ Inicia uma nova venda. """
+        pagina = PaginaPedido()
+        self.notebook.append_page(pagina.child, "Pedido #" + str(1))
+
+class PaginaPedido:
+    """ Classe que contém uma página de venda. """
+
+    def __init__(self):
+        self.cod_pedido = 0
+        self.child = None
+        vbox_main = gtk.VBox(False, 2)
+
+        #-Cliente
+        frame_cliente = gtk.Frame("Cliente")
+        vbox_main.pack_start(frame_cliente, False, True, 2)
+
+        hbox_cliente = gtk.HBox(False, 2)
+        hbox_cliente.set_border_width(2)
+        frame_cliente.add(hbox_cliente)
+        f_cliente = gtk.Fixed()
+    
+        label_cod_cliente = gtk.Label("Código:")
+        f_cliente.put(label_cod_cliente, 2, 8)
+
+        self.entry_cod_cliente = gtk.Entry(0)
+        self.entry_cod_cliente.set_size_request(60, 28)
+        self.entry_cod_cliente.connect("activate", self.localizar_cliente_cod)
+        f_cliente.put(self.entry_cod_cliente, 60, 4)
+
+        self.entry_nome_cliente = gtk.Entry(0)
+        self.entry_nome_cliente.set_size_request(400,28)
+        self.entry_nome_cliente.set_editable(False)
+        f_cliente.put(self.entry_nome_cliente, 122, 4)
+        
+        """ button_localizar_cliente = gtk.Button(stock=gtk.STOCK_FIND)
+        button_localizar_cliente.connect("clicked", localizar_cliente, self.w_locar, self.controle, self.notify_box)
+        f_cliente.put(button_localizar_cliente, 524, 0) """
+    
+        hbox_cliente.pack_start(f_cliente, False, True, 4)
+
+#---divisao h
+        hbox_body = gtk.HBox(False, 2)
+        vbox_main.pack_start(hbox_body, True, True, 2)
+        
+#------framecod dvds
+
+        f_dvd = gtk.Fixed()
+        frame_dvds = gtk.Frame("DvDs")
+        hbox_body.pack_start(frame_dvds, False, True, 2)
+        
+        vbox_dvd = gtk.VBox(False, 2)
+        vbox_dvd.set_border_width(2)
+        frame_dvds.add(vbox_dvd)
+        
+        label_cod_dvd = gtk.Label("Codigo :")
+        f_dvd.put(label_cod_dvd, 2, 8)
+        self.entry_cod_dvd = gtk.Entry(0)
+        self.entry_cod_dvd.set_size_request(60,28)
+        self.entry_cod_dvd.connect("activate", self.popular_lista_dvds)
+        f_dvd.put(self.entry_cod_dvd, 60, 4)
+        
+        vbox_dvd.pack_start(f_dvd, False, True, 4)
+
+        button_remover = gtk.Button(stock=gtk.STOCK_REMOVE)
+        button_remover.connect("clicked", self.remover_item)
+        button_adicionar = gtk.Button(stock=gtk.STOCK_ADD)
+        button_adicionar.connect("clicked", self.popular_lista_dvds)
+
+        bbox = gtk.VButtonBox ()
+        bbox.set_layout(gtk.BUTTONBOX_START)
+        vbox_dvd.pack_start(bbox, False, True, 4)
+        
+        bbox.add(button_adicionar)
+        bbox.add(button_remover)
+
+#------lista de filmes
+        vpaned = gtk.VPaned()
+        hbox_body.pack_start(vpaned, True, True, 2)
+        
+        frame_filmes = gtk.Frame("Lista de Locações")
+        vpaned.add(frame_filmes)
+
+        liststore = self.create_list()
+        frame_filmes.add(liststore)
+        
+#-------area de notificacao
+        vbox_main.pack_start(self.notify_box, False, True, 2)
