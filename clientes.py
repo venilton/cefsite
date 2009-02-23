@@ -14,7 +14,6 @@ def entry_activate_cb(entry, lista, data):
     clientes = [cliente for cliente in data
                         if text.lower() in cliente.nome.lower()]
     lista.add_list(clientes)
-    print 
 
 def on_row_activated( list, cliente, controle, w_localiza_clientes):
     dadoscliente = controle.listar_cliente(cliente.cod)
@@ -23,14 +22,13 @@ def on_row_activated( list, cliente, controle, w_localiza_clientes):
     w_localiza_clientes.hide()
 
 def localizar_cliente(self, window, controle, notify):
-    notify.hide() #Fixme
+    notify.hide() #Fixme 
     w_localiza_clientes = gtk.Dialog("CEF SHOP - Localizar Cliente", window, gtk.DIALOG_MODAL)
     w_localiza_clientes.set_position(gtk.WIN_POS_CENTER)
     w_localiza_clientes.set_size_request(580,300)
     w_localiza_clientes.connect("destroy", lambda w: w_localiza_clientes.hide())
 
 #------Lista
-
     frame_locados = gtk.Frame("Clientes")
     w_localiza_clientes.vbox.add(frame_locados)
     
