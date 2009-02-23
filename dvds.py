@@ -11,7 +11,6 @@ from notify import notify_area
 from iconmenu import iconMenuItem
 
 
-        
 class Categorias:
     class Categoria_dvd:
         def __init__(self, cod, title, valor):
@@ -75,15 +74,14 @@ class Categorias:
         label_preco = gtk.Label("Preço :")
         self.entry_preco = gtk.Entry()
         
-
-        hbox = gtk.HBox()
-        self.w_categorias_dvd.vbox.pack_start(hbox,True, True, 2)
+        hbox1 = gtk.HBox()
+        self.w_categorias_dvd.vbox.pack_start(hbox1,True, True, 2)
 
 #------Toolbar
         toolbar = gtk.Toolbar()
         toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
         toolbar.set_style(gtk.TOOLBAR_BOTH)
-        hbox.pack_start(toolbar,False, False, 5)
+        hbox1.pack_start(toolbar,False, False, 5)
 
         tb_novo = gtk.ToolButton("Novo")
         tb_novo.set_stock_id(gtk.STOCK_NEW)
@@ -97,21 +95,21 @@ class Categorias:
         toolbar.insert(self.tb_editar, -1)
 
 #------Lista
-        vbox = gtk.VBox()
-        hbox.pack_start(vbox,True, True, 2)
+        vbox_lista = gtk.VBox()
+        hbox1.pack_start(vbox_lista,True, True, 2)
         
-        hbox2 = gtk.HBox()
-        vbox.pack_start(hbox2, False, False, 2)
+        hbox_entry = gtk.HBox()
+        vbox_lista.pack_start(hbox_entry, False, False, 2)
         
         self.entry = gtk.Entry()
         self.entry.connect('activate', self.entry_activate_cb )
-        hbox2.pack_end(self.entry, False, False, 2)
+        hbox_entry.pack_end(self.entry, False, False, 2)
         label = gtk.Label('Localizar ')
-        hbox2.pack_end(label, False, False, 2)
+        hbox_entry.pack_end(label, False, False, 2)
         
         frame_generos = gtk.Frame("Categorias")
         #self.w_categorias_dvd.vbox.add(frame_generos)
-        vbox.pack_start(frame_generos, True, True, 2)
+        vbox_lista.pack_start(frame_generos, True, True, 2)
         self.listview = self.create_list()
         frame_generos.add(self.listview)
 
@@ -119,13 +117,13 @@ class Categorias:
         frame_dados = gtk.Frame("Cadastrar Nova Categoria")
         self.w_categorias_dvd.vbox.pack_start(frame_dados, False, False, 2)
        
-        hbox = gtk.HBox()
+        vbox_cad = gtk.VBox()
         
         hbox_labelentry = gtk.HBox(False, 4)
         hbox_labelentry.set_border_width(4)
-        frame_dados.add(hbox)
+        frame_dados.add(vbox_cad)
         
-        hbox.pack_start(hbox_labelentry, True, True, 2)
+        vbox_cad.pack_start(hbox_labelentry, True, True, 2)
         
         vbox_label = gtk.VBox(False, 4)
         hbox_labelentry.pack_start(vbox_label, False, True, 2)
@@ -136,17 +134,21 @@ class Categorias:
         vbox_label.pack_start(label_descricao, False, True, 8)
         vbox_label.pack_start(label_preco, False, True, 8)
         
-        button_add = gtk.Button(stock=gtk.STOCK_ADD)
+        button_save = gtk.Button(stock=gtk.STOCK_SAVE)
+        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         
         vbox_entry.pack_start(self.entry_descricao, False, True, 2)
         vbox_entry.pack_start(self.entry_preco, False, True, 2)
         
         bboxadd = gtk.HButtonBox ()
-        bboxadd.set_layout(gtk.BUTTONBOX_END)
-        bboxadd.add(button_add)
-        hbox.pack_start(bboxadd, False,False, 2)
-
-
+        bboxadd.set_layout(gtk.BUTTONBOX_SPREAD)
+        bboxadd.add(button_save)
+        bboxadd.add(button_cancel)
+        vbox_cad.pack_start(bboxadd, False, False, 0)
+        
+#-------Notify
+        self.notify_box = notify_area(self.controle)
+        self.w_categorias_dvd.vbox.pack_start(self.notify_box, False, True, 2)
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
         button_close.connect("clicked", self.close)
