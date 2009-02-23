@@ -81,6 +81,6 @@ class Receber():
     
 #------Mostra tudo
         self.w_receber.show_all()
-        #self.notify_box.hide()
+        self.notify_box.hide()
         self.w_receber.show()
 
