@@ -39,6 +39,8 @@ class Login:
             Abertura(self.controle)
             
         Loja(self.controle)
+        #list = ListDialog(self.controle, self.controle.modelo.categorias, [], 'Categoria')
+        #list.prepare_dialog
         self.w_login.hide()
 
     def open_admin (self, widget):

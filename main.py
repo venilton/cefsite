@@ -252,6 +252,7 @@ def auto_insert():
     query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 3))
 
     query.cursor.execute("insert into clientes(nome) values (%s)", ('Cliente padrão'))
+    query.cursor.execute("insert into clientes(nome) values (%s)", ('Augusto Men'))
 
 #locacao
 
