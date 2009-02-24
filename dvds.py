@@ -4,7 +4,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 from kiwi.datatypes import currency
-from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
+from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel, ColoredColumn
 from kiwi.ui.entry import KiwiEntry
 
 from notify import notify_area
@@ -19,7 +19,43 @@ class Categorias:
             self.valor = valor
         def __repr__(self):
             return '<Categoria_dvd %s>' % self.title
+            
+    def color(self, valor):
+        if valor =="<Novo>":
+            return valor
+        else:
+            return False
     
+    def sensitive(self, is_sensitive):
+        if is_sensitive == True:
+            self.tb_novo.set_sensitive(True)
+            self.button_cancel.set_sensitive(False)
+            self.button_save.set_sensitive(False)
+            self.entry_descricao.set_text('')       
+            self.entry_preco.set_text('')
+        else:
+            self.tb_novo.set_sensitive(False)
+            self.button_cancel.set_sensitive(True)
+            self.button_save.set_sensitive(True)
+            
+    def cancel_new(self, widget):
+        if self.is_new == True:
+            self.is_new = False
+            item = self.lista.get_selected_row_number()
+            for itens in self.lista:
+                if itens == self.lista[item]:
+                    self.lista.remove(itens)
+            atributo = 'cod'
+            self.lista.emit('cell-edited', self.lista, atributo)
+            self.sensitive(True)
+            
+    def new(self, widget):
+        if self.is_new == False: 
+            self.is_new = True
+            self.lista.append(Categorias.Categoria_dvd('-', '<Novo>', 0))
+            self.lista.refresh
+            self.sensitive(False)
+
     def entry_activate_cb(self, entry):
         text = self.entry.get_text()
         categoria_dvd = [categoria_dvd for categoria_dvd in self.data
@@ -28,8 +64,9 @@ class Categorias:
     
     def create_list(self):
         columns = [
-        Column('cod', data_type =int, sorted=True),
-        Column('title', data_type = str,  title = 'Descrição'),
+        Column('cod', data_type = int, sorted=True),
+        ColoredColumn('title', data_type = int, title = 'Descrição', color='red', data_func = self.color), 
+        #Column('title', data_type = str,  title = 'Descrição'), 
         Column('valor', data_type = currency,  title = 'Valor')
         ]
         self.data =[]
@@ -40,23 +77,29 @@ class Categorias:
             valor = categoria[2]
             self.data.append(Categorias.Categoria_dvd(codigo, descricao, valor))
 
-        lista = ObjectList(columns)
-        lista.extend(self.data)
+        self.lista = ObjectList(columns)
+        self.lista.extend(self.data)
             
-        return lista
+        return self.lista
 
     def destroy(self, widget, data=None):
         gtk.main_quit()
     
     def close(self,w):
         self.w_categorias_dvd.destroy()
-
+    
     def cadastra (self, widget):
         descricao = self.entry_descricao.get_text()       
         preco = self.entry_preco.get_text()
         status = self.controle.cadastra_categoria_dvd(descricao, preco)
         if status == True:
-            self.w_categorias_dvd.destroy()
+            cod_categoria = self.controle.get_categoria_cod()
+            item = self.lista.get_selected_row_number()
+            for itens in self.lista:
+                if itens == self.lista[item]:
+                    self.lista.remove(itens)
+            self.lista.append(Categorias.Categoria_dvd(cod_categoria, descricao, preco))
+            self.sensitive(True)
        
     def __init__(self, controle):
         self.w_categorias_dvd = gtk.Dialog()
@@ -66,7 +109,8 @@ class Categorias:
         self.w_categorias_dvd.set_size_request(600,450)
         self.w_categorias_dvd.set_border_width(8)
         self.controle = controle
-
+        self.is_new = False
+        
 #-------Elementos       
         label_descricao = gtk.Label("Descrição :")
         self.entry_descricao = gtk.Entry(0)
@@ -83,10 +127,10 @@ class Categorias:
         toolbar.set_style(gtk.TOOLBAR_BOTH)
         hbox1.pack_start(toolbar,False, False, 5)
 
-        tb_novo = gtk.ToolButton("Novo")
-        tb_novo.set_stock_id(gtk.STOCK_NEW)
-       # tb_novo.connect("clicked", self.novo)
-        toolbar.insert(tb_novo, -1)
+        self.tb_novo = gtk.ToolButton("Novo")
+        self.tb_novo.set_stock_id(gtk.STOCK_NEW)
+        self.tb_novo.connect("clicked", self.new)
+        toolbar.insert(self.tb_novo, -1)
         
         self.tb_editar = gtk.ToolButton("Editar")
         self.tb_editar.set_sensitive(False)
@@ -134,21 +178,24 @@ class Categorias:
         vbox_label.pack_start(label_descricao, False, True, 8)
         vbox_label.pack_start(label_preco, False, True, 8)
         
-        button_save = gtk.Button(stock=gtk.STOCK_SAVE)
-        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.button_save = gtk.Button(stock=gtk.STOCK_SAVE)
+        self.button_save.connect("clicked", self.cadastra)
+        self.button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.button_cancel.connect("clicked", self.cancel_new)
         
         vbox_entry.pack_start(self.entry_descricao, False, True, 2)
         vbox_entry.pack_start(self.entry_preco, False, True, 2)
         
         bboxadd = gtk.HButtonBox ()
         bboxadd.set_layout(gtk.BUTTONBOX_SPREAD)
-        bboxadd.add(button_save)
-        bboxadd.add(button_cancel)
+        bboxadd.add(self.button_save)
+        bboxadd.add(self.button_cancel)
         vbox_cad.pack_start(bboxadd, False, False, 0)
         
 #-------Notify
         self.notify_box = notify_area(self.controle)
         self.w_categorias_dvd.vbox.pack_start(self.notify_box, False, True, 2)
+        
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
         button_close.connect("clicked", self.close)
@@ -160,7 +207,9 @@ class Categorias:
         bbox.add(button_close)
         button_close.set_flags(gtk.CAN_DEFAULT)
 
+        self.sensitive(True)
         self.w_categorias_dvd.show_all()
+        self.notify_box.hide()
         self.w_categorias_dvd.show()
 #-----------------------------------------------------
 class Generos:

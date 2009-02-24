@@ -207,8 +207,11 @@ class Controle:
         self.modelo.generos.insert_item(descricao)
         return True
     
+    def get_categoria_cod(self):
+        return self.cod_categoria
+        
     def cadastra_categoria_dvd(self, descricao, preco):
-        self.modelo.categorias_dvd.insert_item(descricao, preco)
+        self.cod_categoria = self.modelo.categorias_dvd.insert_item(descricao, preco)
         return True
     
     def listar_categoria_dvd(self):

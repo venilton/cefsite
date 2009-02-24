@@ -253,6 +253,21 @@ def auto_insert():
 
     query.cursor.execute("insert into clientes(nome) values (%s)", ('Cliente padrão'))
 
+#locacao
+
+    query.cursor.execute("insert into categoria_dvd(descricao, preco) values (%s, %s)", ('Superlançamento', 3))
+    codcategoria_dvd = query.last_insert_id()
+    
+    query.cursor.execute("insert into generodvd(descricao) values (%s)", ('Biblico'))
+    codgenero_dvd = query.last_insert_id()
+    
+    quantidade_dvds = 2
+    query.cursor.execute("insert into filme(cod_genero, cod_categoria, titulo, quantidade) values (%s, %s, %s, %s)", (codgenero_dvd, codcategoria_dvd, 'Desafiando Gigantes', quantidade_dvds ))
+    codfilme = query.last_insert_id()
+    
+    for quant in range(quantidade_dvds):
+        query.cursor.execute("insert into dvd(cod_filme) values (%s)", (codfilme))
+    
     query.bd.commit()
 
     print "Pronto."
