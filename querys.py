@@ -280,37 +280,6 @@ class Genero(Tabela):
         return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
 
 class Categoria_dvd(Tabela):
-    def __init__(self, bd, cursor, nome_tabela='categoria_dvd'):
-        Tabela.__init__(self, bd, cursor, nome_tabela)
-        self.all_fields = ['cod_categoria', 'descricao', 'preco']
-
-    def insert_item(self, descricao, preco):
-        campos = {}
-        if descricao is not None:   campos['descricao'] = descricao
-        if preco is not None:       campos['preco'] = preco
-        self.insert(campos)
-        return self.modelo.last_insert_id()
-
-    def update_item(self, descricao, preco):
-        campos = {}
-        if descricao is not None:   campos['descricao'] = descricao
-        if preco is not None:       campos['preco'] = preco
-
-        return self.update(campos, {'cod_genero': cod_genero })
-
-    def locate_item(self, descricao):
-        return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao like '%%%s%%'" % (descricao))
-
-    def select_categoria_dvd(self, cod):
-        return self.runQuery("SELECT * FROM categoria_dvd WHERE cod_categoria=%s", [cod])
-    
-    def select_categoria_desc(self, descricao):
-        return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao=%s", [descricao])
-
-    def get_preco(self, cod):
-        return self.runQuery("SELECT preco FROM categoria_dvd WHERE cod_categoria=%s", [cod])
-
-class Categoria_dvd(Tabela):
     def __init__(self, modelo, nome_tabela='categoria_dvd'):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_categoria', 'descricao', 'preco']

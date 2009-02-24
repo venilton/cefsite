@@ -198,7 +198,7 @@ class Venda:
     def newpage(self):
         """ Inicia uma nova venda. """
         pagina = PaginaPedido()
-        self.notebook.append_page(pagina.child, "Pedido #" + str(1))
+        self.notebook.append_page(pagina.child) #, "Pedido #" + str(1))
 
 class PaginaPedido:
     """ Classe que contém uma página de venda. """
@@ -250,7 +250,7 @@ class PaginaPedido:
         vbox_dvd.set_border_width(2)
         frame_dvds.add(vbox_dvd)
         
-        label_cod_dvd = gtk.Label("Codigo :")
+        label_cod_dvd = gtk.Label("Codigo:")
         f_dvd.put(label_cod_dvd, 2, 8)
         self.entry_cod_dvd = gtk.Entry(0)
         self.entry_cod_dvd.set_size_request(60,28)
@@ -283,3 +283,5 @@ class PaginaPedido:
         
 #-------area de notificacao
         #vbox_main.pack_start(self.notify_box, False, True, 2)
+        self.child = gtk.EventBox()
+        self.child.add(vbox_main)
