@@ -10,31 +10,38 @@ from kiwi.ui.entry import KiwiEntry
 from notify import notify_area
 from iconmenu import iconMenuItem
 
-class Categoria_dvd:
-    def __init__(self, cod, title, valor):
-        self.cod = cod
-        self.title = title
-        self.valor = valor
-    def __repr__(self):
-        return '<Categoria_dvd %s>' % self.title
-        
+
 class Categorias:
+    class Categoria_dvd:
+        def __init__(self, cod, title, valor):
+            self.cod = cod
+            self.title = title
+            self.valor = valor
+        def __repr__(self):
+            return '<Categoria_dvd %s>' % self.title
+    
+    def entry_activate_cb(self, entry):
+        text = self.entry.get_text()
+        categoria_dvd = [categoria_dvd for categoria_dvd in self.data
+                            if text.lower() in categoria_dvd.title.lower()]
+        self.listview.add_list(categoria_dvd)
+    
     def create_list(self):
         columns = [
         Column('cod', data_type =int, sorted=True),
         Column('title', data_type = str,  title = 'Descrição'),
         Column('valor', data_type = currency,  title = 'Valor')
         ]
-        data =[]
+        self.data =[]
         categorias = self.controle.listar_categoria_dvd()
         for categoria in categorias:
             codigo = categoria[0]
             descricao = categoria[1]
             valor = categoria[2]
-            data.append(Categoria_dvd(codigo, descricao, valor))
+            self.data.append(Categorias.Categoria_dvd(codigo, descricao, valor))
 
         lista = ObjectList(columns)
-        lista.extend(data)
+        lista.extend(self.data)
             
         return lista
 
@@ -56,7 +63,7 @@ class Categorias:
         self.w_categorias_dvd.set_position(gtk.WIN_POS_CENTER)
         self.w_categorias_dvd.connect("destroy", self.close)
         self.w_categorias_dvd.set_title("CEF SHOP - Cadastrar Categorias de Dvds ")
-        self.w_categorias_dvd.set_size_request(450,250)
+        self.w_categorias_dvd.set_size_request(600,450)
         self.w_categorias_dvd.set_border_width(8)
         self.controle = controle
 
@@ -66,21 +73,57 @@ class Categorias:
         
         label_preco = gtk.Label("Preço :")
         self.entry_preco = gtk.Entry()
-        #self.entry_preco.set_mask('0000,00')
-#------Lista
-        frame_generos = gtk.Frame("Categorias")
-        self.w_categorias_dvd.vbox.add(frame_generos)
+        
+        hbox1 = gtk.HBox()
+        self.w_categorias_dvd.vbox.pack_start(hbox1,True, True, 2)
 
-        listview = self.create_list()
-        frame_generos.add(listview)
+#------Toolbar
+        toolbar = gtk.Toolbar()
+        toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+        toolbar.set_style(gtk.TOOLBAR_BOTH)
+        hbox1.pack_start(toolbar,False, False, 5)
+
+        tb_novo = gtk.ToolButton("Novo")
+        tb_novo.set_stock_id(gtk.STOCK_NEW)
+       # tb_novo.connect("clicked", self.novo)
+        toolbar.insert(tb_novo, -1)
+        
+        self.tb_editar = gtk.ToolButton("Editar")
+        self.tb_editar.set_sensitive(False)
+        self.tb_editar.set_stock_id(gtk.STOCK_EDIT)
+        #self.tb_editar.connect("clicked", self.editar)
+        toolbar.insert(self.tb_editar, -1)
+
+#------Lista
+        vbox_lista = gtk.VBox()
+        hbox1.pack_start(vbox_lista,True, True, 2)
+        
+        hbox_entry = gtk.HBox()
+        vbox_lista.pack_start(hbox_entry, False, False, 2)
+        
+        self.entry = gtk.Entry()
+        self.entry.connect('activate', self.entry_activate_cb )
+        hbox_entry.pack_end(self.entry, False, False, 2)
+        label = gtk.Label('Localizar ')
+        hbox_entry.pack_end(label, False, False, 2)
+        
+        frame_generos = gtk.Frame("Categorias")
+        #self.w_categorias_dvd.vbox.add(frame_generos)
+        vbox_lista.pack_start(frame_generos, True, True, 2)
+        self.listview = self.create_list()
+        frame_generos.add(self.listview)
 
 #------Frame cadastra
         frame_dados = gtk.Frame("Cadastrar Nova Categoria")
-        self.w_categorias_dvd.vbox.add(frame_dados)
-      
+        self.w_categorias_dvd.vbox.pack_start(frame_dados, False, False, 2)
+       
+        vbox_cad = gtk.VBox()
+        
         hbox_labelentry = gtk.HBox(False, 4)
         hbox_labelentry.set_border_width(4)
-        frame_dados.add(hbox_labelentry)
+        frame_dados.add(vbox_cad)
+        
+        vbox_cad.pack_start(hbox_labelentry, True, True, 2)
         
         vbox_label = gtk.VBox(False, 4)
         hbox_labelentry.pack_start(vbox_label, False, True, 2)
@@ -90,25 +133,32 @@ class Categorias:
 
         vbox_label.pack_start(label_descricao, False, True, 8)
         vbox_label.pack_start(label_preco, False, True, 8)
-
+        
+        button_save = gtk.Button(stock=gtk.STOCK_SAVE)
+        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        
         vbox_entry.pack_start(self.entry_descricao, False, True, 2)
         vbox_entry.pack_start(self.entry_preco, False, True, 2)
-
+        
+        bboxadd = gtk.HButtonBox ()
+        bboxadd.set_layout(gtk.BUTTONBOX_SPREAD)
+        bboxadd.add(button_save)
+        bboxadd.add(button_cancel)
+        vbox_cad.pack_start(bboxadd, False, False, 0)
+        
+#-------Notify
+        self.notify_box = notify_area(self.controle)
+        self.w_categorias_dvd.vbox.pack_start(self.notify_box, False, True, 2)
 #-------Botoes     
-        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
-        button_cancel.connect("clicked", self.close)
-        button_ok = gtk.Button(stock=gtk.STOCK_OK)
-        button_ok.connect("clicked", self.cadastra)
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
 
         bbox = gtk.HButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_END)
         self.w_categorias_dvd.action_area.pack_start(bbox, False, True, 0)
         
-        bbox.add(button_cancel)
-        button_cancel.set_flags(gtk.CAN_DEFAULT)
-
-        bbox.add(button_ok)
-        button_cancel.grab_default()
+        bbox.add(button_close)
+        button_close.set_flags(gtk.CAN_DEFAULT)
 
         self.w_categorias_dvd.show_all()
         self.w_categorias_dvd.show()

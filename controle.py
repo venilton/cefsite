@@ -106,7 +106,6 @@ class Controle:
             raise CodigoInvalido , 'Código deve conter apenas números'
         return cod
         
-
 #clientes
     def cliente_localizado(self):
         if self.cliente_encontrado == True:
@@ -373,7 +372,7 @@ class Controle:
 
 #---caixa
     def open_caixa(self, inicial):
-           #FixMe: get caixas default
+           #FixMe: get conta default
            caixa = 0
            self.modelo.caixa.insert_item(caixa, inicial)
            
@@ -396,6 +395,13 @@ class Controle:
         self.itens = []
         for iten in lista:
             self.itens.append([iten.title , iten.valor])
+        return self.itens
+        
+    def receber_devolucao(self, lista):
+        self.itens = []
+        for iten in lista:
+            if iten.check ==True:
+                self.itens.append([iten.title , iten.valor])
         return self.itens
         
     def set_receber_status(self, recebido):

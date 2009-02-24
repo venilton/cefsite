@@ -222,7 +222,7 @@ class PaginaPedido:
 
         self.entry_cod_cliente = gtk.Entry(0)
         self.entry_cod_cliente.set_size_request(60, 28)
-        self.entry_cod_cliente.connect("activate", self.localizar_cliente_cod)
+        #self.entry_cod_cliente.connect("activate", self.localizar_cliente_cod)
         f_cliente.put(self.entry_cod_cliente, 60, 4)
 
         self.entry_nome_cliente = gtk.Entry(0)
@@ -254,15 +254,15 @@ class PaginaPedido:
         f_dvd.put(label_cod_dvd, 2, 8)
         self.entry_cod_dvd = gtk.Entry(0)
         self.entry_cod_dvd.set_size_request(60,28)
-        self.entry_cod_dvd.connect("activate", self.popular_lista_dvds)
+        #self.entry_cod_dvd.connect("activate", self.popular_lista_dvds)
         f_dvd.put(self.entry_cod_dvd, 60, 4)
         
         vbox_dvd.pack_start(f_dvd, False, True, 4)
 
         button_remover = gtk.Button(stock=gtk.STOCK_REMOVE)
-        button_remover.connect("clicked", self.remover_item)
+        #button_remover.connect("clicked", self.remover_item)
         button_adicionar = gtk.Button(stock=gtk.STOCK_ADD)
-        button_adicionar.connect("clicked", self.popular_lista_dvds)
+        #button_adicionar.connect("clicked", self.popular_lista_dvds)
 
         bbox = gtk.VButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_START)
@@ -278,8 +278,8 @@ class PaginaPedido:
         frame_filmes = gtk.Frame("Lista de Locações")
         vpaned.add(frame_filmes)
 
-        liststore = self.create_list()
-        frame_filmes.add(liststore)
+        #liststore = self.create_list()
+        #frame_filmes.add(liststore)
         
 #-------area de notificacao
-        vbox_main.pack_start(self.notify_box, False, True, 2)
+        #vbox_main.pack_start(self.notify_box, False, True, 2)

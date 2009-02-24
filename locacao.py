@@ -271,9 +271,6 @@ class Devolver:
                 atributo = 'check'
                 self.lista.emit('cell-edited', self.lista, atributo)
             else:
-                self.lista.grab_focus()#fixMe
-                atributo = 'check'
-                self.lista.emit('cell-edited', self.lista, atributo)
                 self.lista.refresh(False)
             self.notify_box.hide()
         else:
@@ -288,22 +285,30 @@ class Devolver:
         self.controle.main_status = False
         self.w_devolver.destroy()
     
-    def cadastra (self, widget, entry_dvd):
-        for dvd in self.data:
-            if dvd.check ==True:
-                self.controle.devolucao(dvd.cod)
-                
-        status = self.controle.notify()
-        if status == False:
-            self.notify_box.show()
-        else:
-            self.w_devolver.hide()
-            self.controle.main_status = True
+    def receber (self,  widget):
+        itens = self.controle.receber_devolucao(self.lista)
+        Receber(self.controle, self.w_devolver, itens)
+    
+    def cadastra (self, widget, focus):
+        recebido = self.controle.get_receber_status()
+        if recebido == True:
+            self.controle.set_receber_status(False)
+            for dvd in self.data:
+                if dvd.check ==True:
+                    self.controle.devolucao(dvd.cod)
+                    
+            status = self.controle.notify()
+            if status == False:
+                self.notify_box.show()
+            else:
+                self.w_devolver.hide()
+                self.controle.main_status = True
 
     def __init__(self,controle):
         self.w_devolver = gtk.Dialog()
         self.w_devolver.set_position(gtk.WIN_POS_CENTER)
         self.w_devolver.connect("destroy", self.close)
+        self.w_devolver.connect("focus_in_event", self.cadastra)
         self.w_devolver.set_title("CEF SHOP - Devolução")
         self.w_devolver.set_size_request(650,400)
         self.w_devolver.set_border_width(8)
@@ -313,7 +318,7 @@ class Devolver:
 
 #-------Elementos       
         label_dvd = gtk.Label("Codigo do DvD :")
-        entry_dvd = gtk.Entry(0)
+        self.entry_dvd = gtk.Entry(0)
         
         self.data = []
         columns = [
@@ -407,7 +412,7 @@ class Devolver:
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
         button_cancel.connect("clicked", self.close)
         button_ok = gtk.Button(stock=gtk.STOCK_OK)
-        button_ok.connect("clicked", self.cadastra,entry_dvd)
+        button_ok.connect("clicked", self.receber)
 
         bbox = gtk.HButtonBox ()
         bbox.set_layout(gtk.BUTTONBOX_END)

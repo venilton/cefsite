@@ -40,9 +40,9 @@ class Modelo:
         ret = self.cursor.fetchall()
         return ret[0][0]
 
-        def begin_transaction(self):
-            """ Inicia uma nova transação. """
-            self.in_transaction += 1
+    def begin_transaction(self):
+        """ Inicia uma nova transação. """
+        self.in_transaction += 1
 
     def end_transaction(self):
         """ Termina uma transação (realiza commit caso não haja mais transações abertas). """
@@ -214,12 +214,12 @@ class Caixa(Tabela):
 
     def insert_item(self, cod_caixa, saldo_inicial):
         self.runSql('INSERT INTO caixa (cod_caixa, data_abertura, saldo_inicial) VALUES (%s, CURDATE(), %s)', (cod_caixa, saldo_inicial))
-        return self.lastInsertId()
+        #return self.last_Insert_Id()
 
     def update_item(self, id, data_fechamento):
         campos = {}
         if data_fechamento is not None: campos['data_fechamento'] = data_fechamento
-        if saldo_total is not None:     campos['saldo_total'] = saldo_total
+        #if saldo_total is not None:     campos['saldo_total'] = saldo_total
         return self.update(campos, {'id': id })
         
     def locate_item(self):
@@ -289,7 +289,7 @@ class Categoria_dvd(Tabela):
         if descricao is not None:   campos['descricao'] = descricao
         if preco is not None:       campos['preco'] = preco
         self.insert(campos)
-        return self.lastInsertId()
+        return self.modelo.last_insert_id()
 
     def update_item(self, descricao, preco):
         campos = {}
@@ -320,7 +320,7 @@ class Categoria_dvd(Tabela):
         if descricao is not None:   campos['descricao'] = descricao
         if preco is not None:       campos['preco'] = preco
         self.insert(campos)
-        return self.lastInsertId()
+        return self.modelo.last_insert_id()
  
     def update_item(self, descricao, preco):
         campos = {}
@@ -369,6 +369,9 @@ class Locacao(Tabela):
 
     def select_locados(self):
         return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0'")
+        
+    def select_locados_porcliente(self,  cod_cliente):
+        return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0'AND cod_cliente=%s", (cod_cliente) )    
 
     def select_locados_atrasados(self):
         return self.runQuery("SELECT idcod, cod_dvd, cod_cliente, retirada, expire_date FROM locados WHERE status_dvd = '0' AND expire_date < CURDATE()")
