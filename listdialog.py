@@ -1,33 +1,35 @@
-# coding: utf-8
+﻿# coding: utf-8
 
 import pygtk
 pygtk.require('2.0')
 import gtk
-from kiwi.datatypes import currency
-from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
-from kiwi.ui.entry import KiwiEntry
 
-from notify import notify_area
+from kiwi.datatypes import currency, converter
+from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
+from kiwi.ui.widgets.entry import ProxyEntry
+from kiwi.ui.dialogs import yesno
+from kiwi.utils import gsignal, quote
+
 from iconmenu import iconMenuItem
 
-from controle import Controle
 
 class FieldType:
     """ Classe que define um campo no diálogo ListDialog. """
-    
-    def __init__(self, field_name, titulo, tipo, tamanho = 0, mask = "", show_in_list = False):
+    def __init__(self, field_name, titulo, tipo, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False):
         self.field_name = field_name
         self.titulo = titulo or field_name
         self.tipo = tipo
         self.tamanho = tamanho
         self.mask = mask #Não usado ainda
         self.show_in_list = show_in_list
+        self.show_field = show_field
         self.label = None
         self.entry = None
+        self.searchable = searchable
+        self.identificador = identificador
 
 class ListToolButton:
     """ Classe que define um botão no Toolbar. """
-    
     def __init__(self, action, stock_id = 0, caption = ""):
         self.caption = caption
         self.stock_id = stock_id
@@ -36,52 +38,68 @@ class ListToolButton:
         elif self.stock_id == gtk.STOCK_EDIT:
             self.caption = self.caption or "Editar"
         self.button = gtk.ToolButton(self.caption)
+        self.button.set_stock_id(self.stock_id)
         if action:
             self.button.connect("clicked", action)
 
+class ListItem:
+    """ Representa um item da lista. """
+    def __init__(self):
+        self.new_item = False
+
 class ListDialog:
     """ Diálogo de edição de uma tabela com botões padrão e uma lista de campos. """
-    
-    def __init__(self, controle, tabela, fields, titulo):
-        self.w_dialog = gtk.Dialog()
-        self.w_dialog.set_position(gtk.WIN_POS_CENTER)
-        self.w_dialog.connect("destroy", self.close)
-        self.w_dialog.set_title("CEF SHOP - Cadastrar Categorias de Dvds ")
-        self.w_dialog.set_size_request(600,450)
-        self.w_dialog.set_border_width(8)
-
+    def __init__(self, controle, tabela, titulo):
+        """ controle é um objeto da classe Controle.
+            tabela é o nome de uma instancia de Classe no Controle que referencia um tabela no Modelo.
+            titulo é nome de leitura da tabela sendo editada (ex. 'Categorias') """
         self.controle = controle
-        self.tabela = tabela
+        self.tabela = getattr(self.controle, tabela)
         self.fields = []
         self.data = []
         self.buttons = []
+        self.new_method = self.create_new_record
+        self.save_method = self.salvar
+        self.populate_method = self.populate
         self.titulo = titulo or self.tabela.nome_tabela
-
-    def prepare_dialog(self, fields, data = [], custom_buttons = []):
-        self.data = data
+        self.edit_mode = False
+        self.editing_new = False
+        self.editing = False
+        self.selection = None
+        
+    def make_widget(self, fields, data = [], custom_buttons = []):
+        """ Cria e retorna o widget que contém o toolbar, a lista e os campos para edição.
+            fields é uma lista de FieldType.
+            data é uma lista de objetos que vai no listview.
+            custom_buttons é uma lista de ListToolButton que substitui os botões padrão. """
 #-------Campos
+        self.fields = []
+        
         for field in fields:
-            field.label = gtk.Label(field.titulo + ":")
-            field.entry = gtk.Entry(field.tamanho)
+            if field.show_field:
+                field.label = gtk.Label(field.titulo + ":")
+                field.entry = ProxyEntry(field.tipo)
             self.fields.append(field)
-
+        
+        vbox_main = gtk.VBox()
         hbox_topo = gtk.HBox()
-        #self.w_dialog.vbox.pack_start(hbox_topo, True, True, 2)
-
+        
+        self.widget = gtk.EventBox()
 #-------Toolbar
         toolbar = gtk.Toolbar()
         toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
         toolbar.set_style(gtk.TOOLBAR_BOTH)
         
-        #if !custom_buttons:
-        if custom_buttons == []:
-            tb_novo = ListToolButton(self.default_new, gtk.STOCK_NEW)
-            tb_editar = ListToolButton(self.default_edit, gtk.STOCK_EDIT)
-            custom_buttons = [tb_novo, tb_editar]
+        if not custom_buttons:
+            self.tb_novo = ListToolButton(self.default_new, gtk.STOCK_NEW)
+            self.tb_edit = ListToolButton(self.default_edit, gtk.STOCK_EDIT)
+            self.custom_buttons = [self.tb_novo, self.tb_edit]
+        else:
+            self.custom_buttons = custom_buttons 
         
-        for tool_button in custom_buttons:
+        for tool_button in self.custom_buttons:
             toolbar.insert(tool_button.button, -1)
-
+        
 #-------Lista
         vbox_lista = gtk.VBox()
         hbox_entry = gtk.HBox()
@@ -91,34 +109,37 @@ class ListDialog:
         label = gtk.Label('Localizar')
         
         frame_lista = gtk.Frame(self.titulo)
-        self.listview = self.create_list(data)
-
+        self.listview = self.create_list()
+        self.listview.connect("row_activated", self.on_row_activated)
+        self.listview.connect('selection-changed',self.on_selection_changed)
+        
 #-------Frame
         frame_dados = gtk.Frame("Informações")
         hbox_dados = gtk.HBox(False, 6)
         vbox_label = gtk.VBox(True, 4)
         vbox_entry = gtk.VBox(True, 4)
+         
         for field in self.fields:
-            vbox_label.pack_start(field.label, False, True, 8)
-            vbox_entry.pack_start(field.entry, False, True, 8)
-
+            if field.show_field:
+                vbox_label.pack_start(field.label, False, True, 8)
+                vbox_entry.pack_start(field.entry, False, True, 8)
+        
         #Botões
-        button_save = gtk.Button(stock=gtk.STOCK_SAVE)
-        button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.button_save = gtk.Button(stock=gtk.STOCK_SAVE)
+        self.button_save.connect("clicked", self.save_method)
+        self.button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.button_cancel.connect("clicked", self.cancel)
+        
         vbox_dados_buttons = gtk.VButtonBox()
         vbox_dados_buttons.set_layout(gtk.BUTTONBOX_SPREAD)
-        vbox_dados_buttons.add(button_save)
-        vbox_dados_buttons.add(button_cancel)
-
+        vbox_dados_buttons.add(self.button_save)
+        vbox_dados_buttons.add(self.button_cancel)
+        
 #-------Notify
-        self.notify_box = notify_area(self.controle)
-
-        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
-        button_close.connect("clicked", self.close)
-        button_close.set_flags(gtk.CAN_DEFAULT)
-        hbox_buttons = gtk.HButtonBox()
-        hbox_buttons.set_layout(gtk.BUTTONBOX_END)
-        hbox_buttons.add(button_close)
+        self.notify = self.controle.notify
+        self.notify_box = self.notify.get_widget()
+        self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
+        self.tabela.set_notify(self.notify)
 
 #-------Posicionar todos
         frame_lista.add(self.listview)
@@ -129,61 +150,223 @@ class ListDialog:
         hbox_topo.pack_start(toolbar, False, False, 5)
         hbox_topo.pack_start(vbox_lista, True, True, 2)
         hbox_dados.pack_start(vbox_label, False, False, 2)
-        hbox_dados.pack_start(vbox_entry, False, False, 2)
+        hbox_dados.pack_start(vbox_entry, True, True, 2)
         hbox_dados.pack_start(vbox_dados_buttons, False, False, 2)
         frame_dados.add(hbox_dados)
-        self.w_dialog.vbox.pack_start(hbox_topo, False, False, 2)
-        self.w_dialog.vbox.pack_start(frame_dados, False, False, 2)
-        self.w_dialog.vbox.pack_start(self.notify_box, False, True, 2)
-        self.w_dialog.action_area.pack_start(hbox_buttons, False, True, 0)
+        vbox_main.pack_start(hbox_topo, True, True, 2)
+        vbox_main.pack_start(frame_dados, False, False, 2)
+        vbox_main.pack_start(self.notify_box, False, True, 2)
+        self.widget.add(vbox_main)
+        
+        self.set_edit_mode(False)
+        return self.widget
 
-    def create_list(self, data):
+    def create_list(self):
         columns = []
         for field in self.fields:
             if field.show_in_list:
                 columns.append(Column(field.field_name, data_type = field.tipo, title = field.titulo))
-
-        lista = ObjectList(columns)
-        lista.extend(self.data)
-        return lista
+        self.lista = ObjectList(columns)
+        self.data = self.populate_method()
+        self.lista.extend(self.data)
+        return self.lista
 
     def localizar(self, entry):
         text = self.entry_localizar.get_text().lower()
-        #categoria_dvd = [categoria_dvd for categoria_dvd in self.data
-        #                    if text.lower() in categoria_dvd.title.lower()]
-        #self.listview.add_list(categoria_dvd)
+        searches = text.split(" ")
+        if not searches: #lista vazia
+            lista = self.data
+        else:
+            lista = []
+            for item in self.data:
+                itemtext = ""
+                #reúne o texto inteiro do item (separado por espaço):
+                for field in self.fields:
+                    if field.searchable:
+                        itemtext += str(getattr(item, field.field_name)).lower() + " "
+                contain_all = True
+                for searchtext in searches:
+                    if searchtext not in itemtext:
+                        contain_all = False
+                if contain_all:
+                    lista.append(item)
+        self.lista.add_list(lista)
 
-    def show_dialog(self):
-        self.w_dialog.show_all()
-        self.notify_box.hide()
-        self.w_dialog.show()
-
-    def close(self, w):
-        self.w_dialog.destroy()
+    def set_edit_mode(self, edit_mode):
+        """ Coloca ou tira os campos em modo de edição. """
+        for field in self.fields:
+            if field.entry:
+                field.entry.set_sensitive(edit_mode)
         
+        for tool_button in self.custom_buttons:
+            tool_button.button.set_sensitive(not edit_mode)
+        
+        self.button_save.set_sensitive(edit_mode)
+        self.button_cancel.set_sensitive(edit_mode)
+        self.editing = edit_mode
+        
+    def cancel(self, widget):
+        """Cancela a edição de um item"""
+        self.set_edit_mode(False)
+        self.clear_entry()
+        self.lista.refresh()
+        if self.editing_new == True:
+            self.lista.remove(self.newobj)
+            self.editing_new = False
+            
+        self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
+            
+    def create_new_record(self):
+        """Adiciona um item padrão a lista para depois ser editado"""
+        self.notify.hide()
+        obj = ListItem()
+        for field in self.fields:
+            if field.tipo == str:
+                setattr(obj, field.field_name, '')
+            else:
+                setattr(obj, field.field_name, converter.from_string(field.tipo, '0'))
+        return obj
+
+    def populate(self):
+        """Popula a lista com os itens"""
+        itens = self.tabela.listar()
+        objetos = []
+        for item in itens:
+            obj = ListItem()
+            for field in self.fields:
+                setattr(obj, field.field_name, item[field.field_name])
+            objetos.append(obj)
+        return objetos
+
     def default_new(self, sender):
-        pass
-    
+        self.newobj = self.new_method() #Chama new_method para criar um novo item
+        self.data.append(self.newobj)
+        self.listview.append(self.newobj)
+        self.listview.refresh()
+        self.listview.select(self.newobj)
+        self.set_edit_mode(True)
+        self.editing_new = True
+        self.item = self.selection
+        
     def default_edit(self, sender):
-        pass
+        if self.selection:
+            self.populate_entry(self.selection)
+            self.set_edit_mode(True)
+            self.item = self.selection
+        
+    def on_row_activated(self, list, item):
+        """Preenche os campos com os valores da coluna clicada e coloca em modo de edição"""
+        self.item = item
+        self.populate_entry(item)
+        
+    def populate_entry(self, item):
+        """Preenche os campos com os itens"""
+        for field in self.fields:
+            if field.entry:
+                field.entry.set_text(str(getattr(item, field.field_name)))
+        self.set_edit_mode(True)
+        
+    def clear_entry(self):
+        """Limpa os campos apos edicao ou cancelar"""
+        for field in self.fields:
+            if field.entry:
+                field.entry.set_text('')
+        self.set_edit_mode(False)
+        
+    def on_selection_changed(self, list, selection):
+        """Verifica se o usuario editou os campos e não salvou"""
+        self.selection = selection
+        if self.editing == True:
+            for field in self.fields:
+                if field.entry:
+                    if not field.identificador:
+                        user_edited = field.entry.get_text()
+                        
+                        #Se for um novo item
+                        if self.editing_new == True:
+                            if user_edited:
+                                response = self.ask_to_save(field)
+                                if response == True:
+                                    self.salvar(None)
+                                else:
+                                    self.cancel(None)
+                            else:
+                                self.cancel(None)
 
-
-if __name__ == '__main__':
-    controle = Controle()
-    
-    fields=[]
-    fields.append(FieldType("nome", "Nome", int))
-    tabela = []
-    base =  ListDialog(controle, tabela, fields, "teste" )
-    base.prepare_dialog(fields)
-    base.show_dialog()
-   
-    gtk.main()
-    
+                        #Se editando item da lista
+                        elif self.editing == True:
+                            field_in_list = (str(getattr(self.item, field.field_name)))
+                            if user_edited != field_in_list:
+                                response = self.ask_to_save(field)
+                                if response == True:
+                                    self.salvar(None)
+                                else:
+                                    self.cancel(None)
+        
+    def ask_to_save(self, field):
+        """Pergunta ao usuario sobre a edicao de campos"""
+        #Criando um novo
+        if self.editing_new : 
+            question =str('Deseja salvar %s ?')
+            for field in self.fields:
+                if field.searchable:
+                    registro = quote(str(field.entry.get_text()))
+        #Editando
+        else:
+            question =str('Deseja salvar alterações em %s ?')
+            registro = quote(str(getattr(self.item, field.field_name)))
+            
+        response = yesno((question) % (registro,),
+                         parent=None,
+                         default=gtk.RESPONSE_OK,
+                         buttons=((gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+                                  (gtk.STOCK_SAVE, gtk.RESPONSE_OK)))
+        return response == gtk.RESPONSE_OK
+        
+    def salvar(self, widget):
+        """Insere ou edita um registro na tabela"""
+        record = {}
+        #Insere novo
+        if self.editing_new :
+            for field in self.fields:
+                if not field.identificador:
+                    if field.entry:
+                        record[field.field_name] = field.entry.get_text()
+            
+            #Valida
+            validate = self.tabela.validate(record)
+            if validate == True:
+                record['last_id'] = self.tabela.insert(record)
+                for field in self.fields:
+                    if field.identificador:
+                        setattr(self.newobj, field.field_name, record['last_id'])
+                    else:
+                        setattr(self.newobj, field.field_name, record[field.field_name])
+                self.editing_new = False
+                self.lista.refresh()
+                self.clear_entry()
+                self.hide_notify()
+        #Edita
+        else:
+            for field in self.fields:
+                if field.identificador:
+                    cod = (str(getattr(self.item, field.field_name)))
+                else:
+                    if field.entry:
+                        record[field.field_name] = field.entry.get_text()
+                        setattr(self.item, field.field_name, record[field.field_name])
+            #Valida
+            validate = self.tabela.validate(record)
+            if validate == True:
+                self.tabela.update(cod, record)
+                self.lista.refresh()
+                self.clear_entry()
+                self.hide_notify()
+        
+        
+    def hide_notify(self):
+        self.notify.hide()
+        
 """ TODO:
-- Novo, editar e excluir (?)
-- Tratamentos com a lista (ao clicar em novo, editar e na lista)
-- Todo o resto
+- Excluir (?)
 """
-
-

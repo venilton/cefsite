@@ -95,6 +95,17 @@ class Tabela:
 
         return self.runQuery(sql1, values)
 
+    def select_records(self, campos, chaves = {}):
+        """ Igual ao select, mas retorna uma lista de dicionários. """
+        records = [] #Dicionários
+        values = self.select(campos, chaves)
+        for row in values:
+            record = {}
+            for i in range(len(campos)):
+                record[campos[i]] = row[i]
+            records.append(record)
+        return records
+
     def insert(self, campos):
         """ Insere um registro usando os valores do dicionário na tabela atual (nome_tabela). """
         sql1 = 'INSERT INTO ' + self.nome_tabela + ' ('
@@ -142,6 +153,9 @@ class Tabela:
 
     def select_all(self):
         return self.select(self.all_fields)
+
+    def select_all_records(self):
+        return self.select_records(self.all_fields)
 
     #Para ser implementado nas classes filhas
     def insert_item(): pass
@@ -284,19 +298,15 @@ class Categoria_dvd(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_categoria', 'descricao', 'preco']
  
-    def insert_item(self, descricao, preco):
-        campos = {}
-        if descricao is not None:   campos['descricao'] = descricao
-        if preco is not None:       campos['preco'] = preco
+    def insert_item(self, campos):
         self.insert(campos)
         return self.modelo.last_insert_id()
  
-    def update_item(self, descricao, preco):
-        campos = {}
-        if descricao is not None:   campos['descricao'] = descricao
-        if preco is not None:       campos['preco'] = preco
- 
-        return self.update(campos, {'cod_genero': cod_genero })
+    def update_item(self, cod_categoria,  campos):
+        #campos = {}
+        #if descricao is not None:   campos['descricao'] = descricao
+        #if preco is not None:       campos['preco'] = preco
+        return self.update(campos, {'cod_categoria': cod_categoria })
  
     def locate_item(self, descricao):
         return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao like '%%%s%%'" % (descricao))

@@ -257,6 +257,7 @@ def auto_insert():
 #locacao
 
     query.cursor.execute("insert into categoria_dvd(descricao, preco) values (%s, %s)", ('Superlançamento', 3))
+    query.cursor.execute("insert into categoria_dvd(descricao, preco) values (%s, %s)", ('Lançamento', 2))
     codcategoria_dvd = query.last_insert_id()
     
     query.cursor.execute("insert into generodvd(descricao) values (%s)", ('Biblico'))

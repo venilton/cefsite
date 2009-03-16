@@ -7,11 +7,47 @@ from kiwi.datatypes import currency
 from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel, ColoredColumn
 from kiwi.ui.entry import KiwiEntry
 
-from notify import notify_area
+from notify import Notify
 from iconmenu import iconMenuItem
+from listdialog import FieldType, ListDialog
 
 
 class Categorias:
+    def close(self,w):
+        self.w_categorias_dvd.destroy()
+
+    def __init__(self, controle):
+ #----Janela       
+        self.w_categorias_dvd = gtk.Dialog()
+        self.w_categorias_dvd.set_position(gtk.WIN_POS_CENTER)
+        self.w_categorias_dvd.connect("destroy", self.close)
+        self.w_categorias_dvd.set_title("CEF SHOP - Cadastrar Categorias de Dvds ")
+        self.w_categorias_dvd.set_size_request(600,450)
+        self.w_categorias_dvd.set_border_width(8)
+        self.controle = controle
+        
+#-----ListObject
+        fields=[]
+        fields.append(FieldType('cod_categoria', '#', int, 0, None, True, False, identificador = True))
+        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True))
+        fields.append(FieldType('preco', 'Preço',currency, 0, None))
+        
+        listobject =  ListDialog(self.controle, 'categorias_dvd', 'Categorias' )
+        widget = listobject.make_widget(fields)
+        
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+
+#-----Empacota e mostra
+        self.w_categorias_dvd.action_area.pack_start(button_close, False, True, 0)        
+        self.w_categorias_dvd.vbox.pack_start(widget,True, True, 2)
+        
+        self.w_categorias_dvd.show_all()
+        self.w_categorias_dvd.show()
+#-----------------------------------------------------    
+
+class Categorias_old:
     class Categoria_dvd:
         def __init__(self, cod, title, valor):
             self.cod = cod
@@ -76,7 +112,7 @@ class Categorias:
             descricao = categoria[1]
             valor = categoria[2]
             self.data.append(Categorias.Categoria_dvd(codigo, descricao, valor))
-
+        
         self.lista = ObjectList(columns)
         self.lista.extend(self.data)
             

@@ -4,7 +4,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 from controle import *
-from notify import notify_area
+from notify import Notify
 from iconmenu import iconMenuItem
 from clientes import Cadastro_clientes
 from locacao import Locar, Devolver
@@ -68,7 +68,7 @@ class Loja:
         self.w_loja.set_title("CEF SHOP - Loja")
         self.w_loja.set_size_request(580,280)
         self.controle = controle
-        self.notify_box = notify_area(self.controle, True,  'apply')
+        self.notify_box = Notify(self.controle, True,  'apply')
 
 #---Botoes
         button_clientes = gtk.Button("Clientes")

@@ -8,7 +8,7 @@ from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
 from kiwi.ui.widgets.entry import ProxyEntry
 from kiwi.ui.widgets.label import ProxyLabel
 
-from notify import notify_area
+from notify import Notify
 
 
 class Receber():

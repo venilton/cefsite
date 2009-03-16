@@ -5,10 +5,13 @@ pygtk.require('2.0')
 import gtk
 from datetime import date
 
-from querys import Modelo , Caixa
-from login import Login
 from kiwi.ui.objectlist import Column
 from kiwi.accessor import ksetattr
+
+from querys import Modelo , Caixa
+from login import Login
+from notify import Notify
+
 
 #Exceções
 class ControleError(Exception): pass
@@ -48,7 +51,7 @@ class Controle:
         self.dadoscliente = [0][0]
         self.itens = []
         self.recebido = False
-    
+        
     def set_modelo(self, modelo):
         self.modelo = modelo
     
@@ -59,8 +62,13 @@ class Controle:
         self.interface = interface
     
     def start(self):
-        self.interface.show()
+        self.notify = Notification()
         
+        #instancias das classes que fazem referencias a tabelas no modelo
+        self.categorias_dvd = Categorias_dvd(self.modelo)
+        
+        self.interface.show()
+
     def logoff(self):        
         self.interface.w_login.show()
 
@@ -97,15 +105,6 @@ class Controle:
         else:
             return False
             
-    def toInt(self, cod):
-        try:
-            cod = int(cod)
-        except:
-            self.notify_text = 'ERRO: campo CÓDIGO deve conter apenas números!'
-            self.status = False
-            raise CodigoInvalido , 'Código deve conter apenas números'
-        return cod
-        
 #clientes
     def cliente_localizado(self):
         if self.cliente_encontrado == True:
@@ -210,7 +209,7 @@ class Controle:
     def get_categoria_cod(self):
         return self.cod_categoria
         
-    def cadastra_categoria_dvd(self, descricao, preco):
+    def cadastra_categoria_dvd(self, (descricao, preco)):
         self.cod_categoria = self.modelo.categorias_dvd.insert_item(descricao, preco)
         return True
     
@@ -412,3 +411,59 @@ class Controle:
         
     def get_receber_status(self):
         return self.recebido
+
+class Categorias_dvd:
+    def __init__(self, modelo):
+        self.modelo = modelo
+        
+    def set_notify(self, notify):
+        self.notify =notify
+        
+    def validate(self, campos):
+        if not campos['descricao'] :
+            self.notify.show_notify('erro','Campo Descrição não deve ficar em branco')
+            return False
+        elif not campos['preco']:
+            self.notify.show_notify('erro','Campo Preço não deve ficar em branco')
+            return False
+        else:
+            return True
+            
+    def insert(self, campos):
+        self.cod_categoria = self.modelo.categorias_dvd.insert_item(campos)
+        return self.cod_categoria
+    
+    def update(self, cod, campos):
+        self.teste = self.modelo.categorias_dvd.update_item(cod, campos)
+        
+    def delete(self, cod):
+        pass
+        
+    def listar(self):
+        records = self.modelo.categorias_dvd.select_all_records()
+        return records
+    
+class Notification:
+    def __init__(self):
+        self.notification = Notify()
+        self.msg = self.notification.add_msg()
+        self.close = self.notification.add_button()
+        self.close.connect("clicked",self.close_notify)
+        
+    def get_widget(self):
+        return self.notification
+        
+    def hide(self):
+        self.notification.hide_all()
+        
+    def close_notify(self, w):
+        self.notification.hide_all()
+    
+    def add_icon(self, icon):
+        self.notification.add_icon(icon)
+        
+    def show_notify(self, icon, text):
+        if text:
+            self.add_icon(icon)
+            self.msg.set_text(text)
+            self.notification.show_all()

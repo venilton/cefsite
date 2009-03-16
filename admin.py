@@ -3,7 +3,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from notify import notify_area
+from notify import Notify
 from iconmenu import iconMenuItem
 from locacao import Locados, Atrasados
 from dvds import *
@@ -53,7 +53,7 @@ class Admin:
         self.w_admin.set_title("CEF SHOP - Administração")
         self.w_admin.set_size_request(580,280)
         self.controle = controle
-        self.notify_box = notify_area(self.controle, True, 'apply')
+        self.notify_box = Notify()
 
 #---Botoes
         button_generos = gtk.Button("Generos")

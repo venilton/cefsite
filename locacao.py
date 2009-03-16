@@ -6,7 +6,7 @@ import gtk
 from kiwi.datatypes import currency
 from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
 
-from notify import notify_area
+from notify import Notify
 from iconmenu import iconMenuItem
 from clientes import localizar_cliente
 from receber import Receber
@@ -115,7 +115,7 @@ class Locar:
         self.w_locar.set_size_request(650,400)
         self.w_locar.set_border_width(8)
         self.controle = controle
-        self.notify_box = notify_area(self.controle)
+        self.notify_box = Notify(self.controle)
         self.quant_itens = 0
      
 #------Divisao v principal
@@ -313,7 +313,7 @@ class Devolver:
         self.w_devolver.set_size_request(650,400)
         self.w_devolver.set_border_width(8)
         self.controle = controle
-        self.notify_box = notify_area(self.controle)
+        self.notify_box = Notify(self.controle)
         self.quant_itens = 0
 
 #-------Elementos       
