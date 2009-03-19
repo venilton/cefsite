@@ -4,7 +4,6 @@ import pygtk
 import gtk
 from controle import *
 from kiwi.ui.objectlist import Column, ObjectList
-from kiwi.accessor import ksetattr, kgetattr
 
 class SelectDialog:
     """ Classe que implementa uma janela de pesquisa de registros dentro de uma tabela. """
@@ -36,7 +35,7 @@ class SelectDialog:
         response = self.dialog.run()
         if response == gtk.RESPONSE_OK:
             selected = self.lista.get_selected()
-            ret = [kgetattr(selected, campo) for campo in self.campos_retorno]
+            ret = [getattr(selected, campo) for campo in self.campos_retorno]
         self.dialog.hide()
         return ret
 
@@ -72,7 +71,7 @@ class SelectDialog:
         text = self.entry_pesq.get_text().lower()
         if text:
             self.view_items = [item for item in self.recordset.items
-                if text in kgetattr(item, 'nome')]
+                if text in getattr(item, 'nome')]
         else:
             self.view_items = self.recordset.items
         self.lista.add_list(self.view_items)

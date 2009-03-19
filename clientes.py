@@ -5,7 +5,7 @@ pygtk.require('2.0')
 import gtk
 from kiwi.ui.objectlist import Column, ObjectList
 
-from notify import notify_area
+from notify import Notify
 from iconmenu import iconMenuItem
 
 
@@ -183,7 +183,7 @@ class Cadastro_clientes:
         self.editando = False
         self.cliente_selecionado = False
         self.dadoscliente = None
-        self.notify_box = notify_area(self.controle)
+        self.notify_box = Notify()
 
 #------Toolbar
         toolbar = gtk.Toolbar()

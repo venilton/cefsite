@@ -4,7 +4,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from notify import notify_area
+from notify import Notify
 
 
 class Caixa():
@@ -38,7 +38,7 @@ class Abertura():
         self.w_open_caixa.vbox.pack_start(vbox, True, False, 5)
         
 #-------area de notificacao
-        self.notify_box = notify_area(self.controle)
+        self.notify_box = Notify(self.controle)
         self.w_open_caixa.vbox.pack_start(self.notify_box,False, True, 4)
 
 #-------Botoes

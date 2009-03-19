@@ -5,10 +5,13 @@ pygtk.require('2.0')
 import gtk
 from datetime import date
 
-from querys import Modelo , Caixa
-from login import Login
 from kiwi.ui.objectlist import Column
 from kiwi.accessor import ksetattr
+
+from querys import Modelo , Caixa
+from login import Login
+from notify import Notify
+
 
 #Exceções
 class ControleError(Exception): pass
@@ -39,6 +42,46 @@ class Recordset:
     def col_count(self):
         return len(self.columns)
 
+class TabelaControle:
+    """ Essa classe controla uma funcionalidade do sistema, por exemplo:
+        - Cadastro de categorias, gêneros, produtos, etc. 
+        Pode envolver mais de uma tabela. """
+    def __init__(self, modelo, tabela):
+        self.modelo = modelo
+        self.tabela = tabela
+    
+    def set_notify(self, notify):
+        self.notify = notify
+    
+    def validate(self, campos):
+        """ Validação dos campos dessa tabela. A ser implementado nas classes finais. """
+        return True
+    
+    def obrigatorio(self, valor, mensagem = ''):
+        """ Verifica se um campo está preenchido e, se não, exibe o notify com a mensagem de erro (caso especificada). """
+        if not valor:
+            if self.notify and mensagem:
+                self.notify.show_notify('erro', mensagem)
+            return False
+        else:
+            return True
+
+    #As funções a seguir demonstram um comportamento padrão. Podem ser substituídas.
+    def insert(self, campos):
+        if self.tabela:
+            return self.tabela.insert_item(campos)
+    
+    def update(self, cod, campos):
+        if self.tabela:
+            return self.tabela.update_item(campos, cod, chaves)
+        
+    def delete(self, cod):
+        if self.tabela:
+            return self.tabela.delete_item(cod)
+        
+    def listar(self):
+        return self.tabela.select_all_records()
+
 class Controle:
     def __init__(self):
         self.status = False
@@ -48,7 +91,7 @@ class Controle:
         self.dadoscliente = [0][0]
         self.itens = []
         self.recebido = False
-    
+        
     def set_modelo(self, modelo):
         self.modelo = modelo
     
@@ -59,8 +102,13 @@ class Controle:
         self.interface = interface
     
     def start(self):
-        self.interface.show()
+        self.notify = Notification()
         
+        #instancias das classes que fazem referencias a tabelas no modelo
+        self.categorias_dvd = Categorias_dvd(self.modelo, self.modelo.categorias_dvd)
+        
+        self.interface.show()
+
     def logoff(self):        
         self.interface.w_login.show()
 
@@ -97,15 +145,6 @@ class Controle:
         else:
             return False
             
-    def toInt(self, cod):
-        try:
-            cod = int(cod)
-        except:
-            self.notify_text = 'ERRO: campo CÓDIGO deve conter apenas números!'
-            self.status = False
-            raise CodigoInvalido , 'Código deve conter apenas números'
-        return cod
-        
 #clientes
     def cliente_localizado(self):
         if self.cliente_encontrado == True:
@@ -207,8 +246,11 @@ class Controle:
         self.modelo.generos.insert_item(descricao)
         return True
     
+    def get_categoria_cod(self):
+        return self.cod_categoria
+        
     def cadastra_categoria_dvd(self, descricao, preco):
-        self.modelo.categorias_dvd.insert_item(descricao, preco)
+        self.cod_categoria = self.modelo.categorias_dvd.insert_item(descricao, preco)
         return True
     
     def listar_categoria_dvd(self):
@@ -409,3 +451,37 @@ class Controle:
         
     def get_receber_status(self):
         return self.recebido
+
+class Categorias_dvd(TabelaControle):
+    def validate(self, campos):
+        if not self.obrigatorio(campos['descricao'], 'Campo Descrição não deve ficar em branco.'):
+            return False
+        elif not self.obrigatorio(campos['preco'], 'Campo Preço não deve ficar em branco.'):
+            return False
+        else:
+            return True
+    
+class Notification:
+    def __init__(self):
+        self.notification = Notify()
+        self.msg = self.notification.add_msg()
+        self.close = self.notification.add_button()
+        self.close.connect("clicked",self.close_notify)
+        
+    def get_widget(self):
+        return self.notification
+        
+    def hide(self):
+        self.notification.hide_all()
+        
+    def close_notify(self, w):
+        self.notification.hide_all()
+    
+    def add_icon(self, icon):
+        self.notification.add_icon(icon)
+        
+    def show_notify(self, icon, text):
+        if text:
+            self.add_icon(icon)
+            self.msg.set_text(text)
+            self.notification.show_all()
