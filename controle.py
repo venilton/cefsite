@@ -42,6 +42,46 @@ class Recordset:
     def col_count(self):
         return len(self.columns)
 
+class TabelaControle:
+    """ Essa classe controla uma funcionalidade do sistema, por exemplo:
+        - Cadastro de categorias, gêneros, produtos, etc. 
+        Pode envolver mais de uma tabela. """
+    def __init__(self, modelo, tabela):
+        self.modelo = modelo
+        self.tabela = tabela
+    
+    def set_notify(self, notify):
+        self.notify = notify
+    
+    def validate(self, campos):
+        """ Validação dos campos dessa tabela. A ser implementado nas classes finais. """
+        return True
+    
+    def obrigatorio(self, valor, mensagem = ''):
+        """ Verifica se um campo está preenchido e, se não, exibe o notify com a mensagem de erro (caso especificada). """
+        if not valor:
+            if self.notify and mensagem:
+                self.notify.show_notify('erro', mensagem)
+            return False
+        else:
+            return True
+
+    #As funções a seguir demonstram um comportamento padrão. Podem ser substituídas.
+    def insert(self, campos):
+        if self.tabela:
+            return self.tabela.insert_item(campos)
+    
+    def update(self, cod, campos):
+        if self.tabela:
+            return self.tabela.update_item(campos, cod, chaves)
+        
+    def delete(self, cod):
+        if self.tabela:
+            return self.tabela.delete_item(cod)
+        
+    def listar(self):
+        return self.tabela.select_all_records()
+
 class Controle:
     def __init__(self):
         self.status = False
@@ -63,7 +103,9 @@ class Controle:
     
     def start(self):
         self.notify = Notification()
-        self.listactions = ListActions(self.modelo)
+        
+        #instancias das classes que fazem referencias a tabelas no modelo
+        self.categorias_dvd = Categorias_dvd(self.modelo, self.modelo.categorias_dvd)
         
         self.interface.show()
 
@@ -207,7 +249,7 @@ class Controle:
     def get_categoria_cod(self):
         return self.cod_categoria
         
-    def cadastra_categoria_dvd(self, (descricao, preco)):
+    def cadastra_categoria_dvd(self, descricao, preco):
         self.cod_categoria = self.modelo.categorias_dvd.insert_item(descricao, preco)
         return True
     
@@ -409,66 +451,15 @@ class Controle:
         
     def get_receber_status(self):
         return self.recebido
-  
-class ListActions:
-    """Classe que controla as ações de inserir e editar a lista"""
-    def __init__(self, modelo):
-        self.modelo = modelo
-        
-    def set_notify(self, notify):
-        self.notify =notify
-        
-    def validate(self, field):
-        if field.requerido :
-            if field.entry.get_text() == '':
-                self.notify.show_notify('erro','Campo %s não deve ficar em branco' % field.field_name)
-                return False
-                
-        return True
-        
-    def set_table(self, tabela):
-        self.tabela = getattr(self.modelo, tabela)
-        
-    def insert(self, fields, newobj):
-        record = {}
-        for field in fields:
-            validate = self.validate(field)
-            if validate == True:
-                if not field.identificador:
-                    if field.entry:
-                        record[field.field_name] = field.entry.get_text()
-            else:
-                return False
-        record['last_id'] = self.tabela.insert_item(record)
-        for field in fields:
-            if field.identificador:
-                setattr(newobj, field.field_name, record['last_id'])
-            else:
-                setattr(newobj, field.field_name, record[field.field_name])
-        return True
-    
-    def update(self, fields, item):
-        record = {}
-        for field in fields:
-            validate = self.validate(field)
-            if validate == True:
-                if field.identificador:
-                    cod = (str(getattr(item, field.field_name)))
-                else:
-                    if field.entry:
-                        record[field.field_name] = field.entry.get_text()
-                        setattr(item, field.field_name, record[field.field_name])
-            else:
-                return False
-        self.tabela.update_item(cod, record)
-        return True
-        
-    def delete(self, cod):
-        pass
-        
-    def listar(self):
-        records = self.tabela.select_all_records()
-        return records
+
+class Categorias_dvd(TabelaControle):
+    def validate(self, campos):
+        if not self.obrigatorio(campos['descricao'], 'Campo Descrição não deve ficar em branco.'):
+            return False
+        elif not self.obrigatorio(campos['preco'], 'Campo Preço não deve ficar em branco.'):
+            return False
+        else:
+            return True
     
 class Notification:
     def __init__(self):
