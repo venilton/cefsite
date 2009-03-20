@@ -15,7 +15,7 @@ from iconmenu import iconMenuItem
 
 class FieldType:
     """ Classe que define um campo no diálogo ListDialog. """
-    def __init__(self, field_name, titulo, tipo, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False):
+    def __init__(self, field_name, titulo, tipo, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False, requerido = False):
         self.field_name = field_name
         self.titulo = titulo or field_name
         self.tipo = tipo
@@ -27,6 +27,7 @@ class FieldType:
         self.entry = None
         self.searchable = searchable
         self.identificador = identificador
+        self.requerido = requerido
 
 class ListToolButton:
     """ Classe que define um botão no Toolbar. """
@@ -51,10 +52,9 @@ class ListDialog:
     """ Diálogo de edição de uma tabela com botões padrão e uma lista de campos. """
     def __init__(self, controle, tabela, titulo):
         """ controle é um objeto da classe Controle.
-            tabela é o nome de uma instancia de Classe no Controle que referencia um tabela no Modelo.
+            tabela é o nome da tabela no Modelo.
             titulo é nome de leitura da tabela sendo editada (ex. 'Categorias') """
         self.controle = controle
-        self.tabela = getattr(self.controle, tabela)
         self.fields = []
         self.data = []
         self.buttons = []
@@ -66,6 +66,9 @@ class ListDialog:
         self.editing_new = False
         self.editing = False
         self.selection = None
+        self.do_nothing = False
+        
+        self.controle.listactions.set_table(tabela)
         
     def make_widget(self, fields, data = [], custom_buttons = []):
         """ Cria e retorna o widget que contém o toolbar, a lista e os campos para edição.
@@ -139,7 +142,7 @@ class ListDialog:
         self.notify = self.controle.notify
         self.notify_box = self.notify.get_widget()
         self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
-        self.tabela.set_notify(self.notify)
+        self.controle.listactions.set_notify(self.notify)
 
 #-------Posicionar todos
         frame_lista.add(self.listview)
@@ -201,6 +204,7 @@ class ListDialog:
         for tool_button in self.custom_buttons:
             tool_button.button.set_sensitive(not edit_mode)
         
+        self.entry_localizar.set_sensitive(not edit_mode)
         self.button_save.set_sensitive(edit_mode)
         self.button_cancel.set_sensitive(edit_mode)
         self.editing = edit_mode
@@ -229,7 +233,7 @@ class ListDialog:
 
     def populate(self):
         """Popula a lista com os itens"""
-        itens = self.tabela.listar()
+        itens = self.controle.listactions.listar()
         objetos = []
         for item in itens:
             obj = ListItem()
@@ -275,7 +279,12 @@ class ListDialog:
         
     def on_selection_changed(self, list, selection):
         """Verifica se o usuario editou os campos e não salvou"""
+        if self.do_nothing:
+            self.do_nothing = False
+            return
+            
         self.selection = selection
+        response = False
         if self.editing == True:
             for field in self.fields:
                 if field.entry:
@@ -291,7 +300,11 @@ class ListDialog:
                                 else:
                                     self.cancel(None)
                             else:
-                                self.cancel(None)
+                                if response:
+                                        self.do_nothing = True
+                                        self.listview.select(self.item)
+                                else:
+                                    self.cancel(None)
 
                         #Se editando item da lista
                         elif self.editing == True:
@@ -302,6 +315,10 @@ class ListDialog:
                                     self.salvar(None)
                                 else:
                                     self.cancel(None)
+                            else:
+                                if response:
+                                        self.do_nothing = True
+                                        self.listview.select(self.item)
         
     def ask_to_save(self, field):
         """Pergunta ao usuario sobre a edicao de campos"""
@@ -328,41 +345,19 @@ class ListDialog:
         record = {}
         #Insere novo
         if self.editing_new :
-            for field in self.fields:
-                if not field.identificador:
-                    if field.entry:
-                        record[field.field_name] = field.entry.get_text()
-            
-            #Valida
-            validate = self.tabela.validate(record)
-            if validate == True:
-                record['last_id'] = self.tabela.insert(record)
-                for field in self.fields:
-                    if field.identificador:
-                        setattr(self.newobj, field.field_name, record['last_id'])
-                    else:
-                        setattr(self.newobj, field.field_name, record[field.field_name])
+            insert = self.controle.listactions.insert(self.fields, self.newobj)
+            if insert == True:
                 self.editing_new = False
                 self.lista.refresh()
                 self.clear_entry()
                 self.hide_notify()
         #Edita
         else:
-            for field in self.fields:
-                if field.identificador:
-                    cod = (str(getattr(self.item, field.field_name)))
-                else:
-                    if field.entry:
-                        record[field.field_name] = field.entry.get_text()
-                        setattr(self.item, field.field_name, record[field.field_name])
-            #Valida
-            validate = self.tabela.validate(record)
-            if validate == True:
-                self.tabela.update(cod, record)
+            update = self.controle.listactions.update(self.fields, self.item)
+            if update == True:
                 self.lista.refresh()
                 self.clear_entry()
                 self.hide_notify()
-        
         
     def hide_notify(self):
         self.notify.hide()

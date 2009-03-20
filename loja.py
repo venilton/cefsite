@@ -68,7 +68,6 @@ class Loja:
         self.w_loja.set_title("CEF SHOP - Loja")
         self.w_loja.set_size_request(580,280)
         self.controle = controle
-        self.notify_box = Notify(self.controle, True,  'apply')
 
 #---Botoes
         button_clientes = gtk.Button("Clientes")
@@ -141,6 +140,10 @@ class Loja:
         vbox_loca.add(button_devolucao)
 
 #-------area de notificacao
+        self.notify = self.controle.notify
+        self.notify_box = self.notify.get_widget()
+        self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
+        self.controle.listactions.set_notify(self.notify)
         vbox_main.pack_start(self.notify_box,False, True, 4)
         
 #-------Mostra tudo

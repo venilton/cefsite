@@ -271,17 +271,11 @@ class Genero(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_genero', 'descricao']
 
-    def insert_item(self, descricao):
-        campos = {}
-        if descricao is not None:   campos['descricao'] = descricao
-
+    def insert_item(self,campos):
         self.insert(campos)
         return self.modelo.last_insert_id()
 
-    def update_item(self, cod_genero, descricao):
-        campos = {}
-        if descricao is not None:    campos['descricao'] = descricao
-
+    def update_item(self, cod_genero, campos):
         return self.update(campos, {'cod_genero': cod_genero })
 
     def locate_item(self, descricao):
@@ -303,9 +297,6 @@ class Categoria_dvd(Tabela):
         return self.modelo.last_insert_id()
  
     def update_item(self, cod_categoria,  campos):
-        #campos = {}
-        #if descricao is not None:   campos['descricao'] = descricao
-        #if preco is not None:       campos['preco'] = preco
         return self.update(campos, {'cod_categoria': cod_categoria })
  
     def locate_item(self, descricao):

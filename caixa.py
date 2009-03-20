@@ -38,7 +38,10 @@ class Abertura():
         self.w_open_caixa.vbox.pack_start(vbox, True, False, 5)
         
 #-------area de notificacao
-        self.notify_box = Notify(self.controle)
+        self.notify = self.controle.notify
+        self.notify_box = self.notify.get_widget()
+        self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
+        self.controle.listactions.set_notify(self.notify)
         self.w_open_caixa.vbox.pack_start(self.notify_box,False, True, 4)
 
 #-------Botoes

@@ -183,7 +183,9 @@ class Cadastro_clientes:
         self.editando = False
         self.cliente_selecionado = False
         self.dadoscliente = None
-        self.notify_box = Notify(self.controle)
+        self.notify = self.controle.notify
+        self.notify_box = self.notify.get_widget()
+        self.controle.listactions.set_notify(self.notify)
 
 #------Toolbar
         toolbar = gtk.Toolbar()
@@ -279,6 +281,7 @@ class Cadastro_clientes:
         vbox_labelentry.pack_start(f_campos, False, True, 4)
 
 #-------area de notificacao
+        
         self.w_cad_clientes.vbox.pack_start(self.notify_box,False, True, 4)
         
 #-------Botoes

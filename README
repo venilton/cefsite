@@ -1,7 +1,38 @@
-Crie um banco de dados vazio no Mysql
+Requisitos de Software
+----------------------
+python >2.5
+gtk >=2.0
+python-gtk2 >2.14
+mysql-server >5.1
+python-mysqldb >1.2.2
+python-kiwi >1.9.22
 
-Crie o arquivo dblogin.py
-com o seguinte conteudo
+-----------------------
+Configuração Inicial
+-----------------------
+	Criando o banco de dados e usuario
+
+$ mysql -u root -p
+insira a senha fornecida na instalação do mysql-server
+
+> create database cefshop;
+> create user 'marcos';
+> grant all privileges on cefsho.* to marcos identified by 'marcos123';
+
+	Criando as tabelas
+
+$ python create_table.py
+
+	Populando as tabelas com uma base de teste
+
+$ python main.py
+Digite a opção A
+---------------------------------
+
+Se vc deu um nome difierente do sugerido para o banco de
+dados ou para o usuario, poderá alterar essas informações 
+facilmente no arquivo dblogin.py
+
 --------------------------------------------
 user = 'marcos'
 passwd = 'marcos123'
@@ -13,9 +44,10 @@ marcos123 é a senha
 e cefshop o nome do bando de dados
 
 altere esses valores pelos que forneceu ao Mysql
+---------------------------------------------------
 
-Salve o arquivo dblogin.py na mesma pasta com o restante do código 
+Para usar o programa é só rodar cefshop.py
 
-então rode o arquivo create_table.py  para que ele crie as tabelas no banco de dados.
+$ python cefshop.py
 
-Agora pode rodar o cefshop.py
+

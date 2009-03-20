@@ -63,9 +63,7 @@ class Controle:
     
     def start(self):
         self.notify = Notification()
-        
-        #instancias das classes que fazem referencias a tabelas no modelo
-        self.categorias_dvd = Categorias_dvd(self.modelo)
+        self.listactions = ListActions(self.modelo)
         
         self.interface.show()
 
@@ -411,36 +409,65 @@ class Controle:
         
     def get_receber_status(self):
         return self.recebido
-
-class Categorias_dvd:
+  
+class ListActions:
+    """Classe que controla as ações de inserir e editar a lista"""
     def __init__(self, modelo):
         self.modelo = modelo
         
     def set_notify(self, notify):
         self.notify =notify
         
-    def validate(self, campos):
-        if not campos['descricao'] :
-            self.notify.show_notify('erro','Campo Descrição não deve ficar em branco')
-            return False
-        elif not campos['preco']:
-            self.notify.show_notify('erro','Campo Preço não deve ficar em branco')
-            return False
-        else:
-            return True
-            
-    def insert(self, campos):
-        self.cod_categoria = self.modelo.categorias_dvd.insert_item(campos)
-        return self.cod_categoria
+    def validate(self, field):
+        if field.requerido :
+            if field.entry.get_text() == '':
+                self.notify.show_notify('erro','Campo %s não deve ficar em branco' % field.field_name)
+                return False
+                
+        return True
+        
+    def set_table(self, tabela):
+        self.tabela = getattr(self.modelo, tabela)
+        
+    def insert(self, fields, newobj):
+        record = {}
+        for field in fields:
+            validate = self.validate(field)
+            if validate == True:
+                if not field.identificador:
+                    if field.entry:
+                        record[field.field_name] = field.entry.get_text()
+            else:
+                return False
+        record['last_id'] = self.tabela.insert_item(record)
+        for field in fields:
+            if field.identificador:
+                setattr(newobj, field.field_name, record['last_id'])
+            else:
+                setattr(newobj, field.field_name, record[field.field_name])
+        return True
     
-    def update(self, cod, campos):
-        self.teste = self.modelo.categorias_dvd.update_item(cod, campos)
+    def update(self, fields, item):
+        record = {}
+        for field in fields:
+            validate = self.validate(field)
+            if validate == True:
+                if field.identificador:
+                    cod = (str(getattr(item, field.field_name)))
+                else:
+                    if field.entry:
+                        record[field.field_name] = field.entry.get_text()
+                        setattr(item, field.field_name, record[field.field_name])
+            else:
+                return False
+        self.tabela.update_item(cod, record)
+        return True
         
     def delete(self, cod):
         pass
         
     def listar(self):
-        records = self.modelo.categorias_dvd.select_all_records()
+        records = self.tabela.select_all_records()
         return records
     
 class Notification:
