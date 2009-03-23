@@ -168,31 +168,11 @@ class Cliente(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_cliente', 'nome', 'telefone', 'celular', 'endereco', 'bairro', 'cidade', 'estado', 'cep']
 
-    def insert_item(self, name, telefone, celular, endereco, bairro, cidade, estado, cep):
-        campos = {}
-        campos['nome'] = name
-        if telefone is not None:    campos['telefone'] = telefone
-        if celular is not None:        campos['celular'] = celular
-        if endereco is not None:    campos['endereco'] = endereco
-        if bairro is not None:        campos['bairro'] = bairro
-        if cidade is not None:        campos['cidade'] = cidade
-        if estado is not None:        campos['estado'] = estado
-        if cep is not None:            campos['cep'] = cep
-
+    def insert_item(self, campos):
         self.insert(campos)
         return self.modelo.last_insert_id()
 
-    def update_item(self, cod_cliente, name, telefone, celular, endereco, bairro, cidade, estado, cep):
-        campos = {}
-        if name is not None:        campos['nome'] = name
-        if telefone is not None:    campos['telefone'] = telefone
-        if celular is not None:     campos['celular'] = celular
-        if endereco is not None:    campos['endereco'] = endereco
-        if bairro is not None:      campos['bairro'] = bairro
-        if cidade is not None:      campos['cidade'] = cidade
-        if estado is not None:      campos['estado'] = estado
-        if cep is not None:         campos['cep'] = cep
-
+    def update_item(self, cod_cliente, campos):
         return self.update(campos, {'cod_cliente': cod_cliente})
 
     def locate_item(self, name):
@@ -244,23 +224,11 @@ class Filme(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_filme', 'cod_genero', 'cod_categoria','titulo', 'quantidade']
 
-    def insert_item(self, cod_genero, cod_categoria_dvd, titulo, quantidade):
-        campos = {}
-        if cod_genero is not None:          campos['cod_genero'] = cod_genero
-        if cod_categoria_dvd is not None:   campos['cod_categoria'] = cod_categoria_dvd
-        if titulo is not None:              campos['titulo'] = titulo
-        if quantidade is not None:          campos['quantidade'] = quantidade
-
+    def insert_item(self, campos):
         self.insert(campos)
         return self.modelo.last_insert_id()
 
-    def update_item(self, cod_filme, cod_genero, cod_categoria_dvd, titulo, quantidade):
-        campos = {}
-        if cod_genero is not None:          campos['cod_genero'] = cod_genero
-        if cod_categoria_dvd is not None:   campos['cod_categoria'] = cod_categoria_dvd
-        if titulo is not None:              campos['titulo'] = titulo
-        if quantidade is not None:          campos['quantidade'] = quantidade
-
+    def update_item(self, cod_filme, campos):
         return self.update(campos, {'cod_filme': cod_filme})
 
     def locate_item(self, name):
@@ -282,7 +250,7 @@ class Genero(Tabela):
         return self.runQuery("SELECT * FROM generodvd WHERE descricao like '%%%s%%'" % (descricao))
 
     def select_genero(self, cod):
-        return self.runQuery("SELECT * FROM generodvd WHERE cod_genero=%s", [cod])
+        return self.runQuery("SELECT descricao FROM generodvd WHERE cod_genero=%s", [cod])
     
     def select_genero_desc(self, descricao):
         return self.runQuery("SELECT * FROM generodvd WHERE descricao=%s", [descricao])
@@ -296,14 +264,14 @@ class Categoria_dvd(Tabela):
         self.insert(campos)
         return self.modelo.last_insert_id()
  
-    def update_item(self, cod_categoria,  campos):
+    def update_item(self, cod_categoria, campos):
         return self.update(campos, {'cod_categoria': cod_categoria })
  
     def locate_item(self, descricao):
         return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao like '%%%s%%'" % (descricao))
  
     def select_categoria_dvd(self, cod):
-        return self.runQuery("SELECT * FROM categoria_dvd WHERE cod_categoria=%s", [cod])
+        return self.runQuery("SELECT descricao FROM categoria_dvd WHERE cod_categoria=%s", [cod])
     
     def select_categoria_desc(self, descricao):
         return self.runQuery("SELECT * FROM categoria_dvd WHERE descricao=%s", [descricao])

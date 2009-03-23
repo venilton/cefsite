@@ -29,8 +29,8 @@ class Categorias:
 #-----ListObject
         fields=[]
         fields.append(FieldType('cod_categoria', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True, requerido =True))
-        fields.append(FieldType('preco', 'Preço',currency, 0, None, requerido = True))
+        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True,requerido = True))
+        fields.append(FieldType('preco', 'Preço',currency, 0, None,requerido = True))
         
         listobject =  ListDialog(self.controle, 'categorias_dvd', 'Categorias' )
         widget = listobject.make_widget(fields)
@@ -46,7 +46,6 @@ class Categorias:
         self.w_categorias_dvd.show_all()
         self.w_categorias_dvd.show()
 #-----------------------------------------------------    
-
 class Generos:
     def close(self,w):
         self.w_generos.destroy()
@@ -64,7 +63,7 @@ class Generos:
 #-----ListObject
         fields=[]
         fields.append(FieldType('cod_genero', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True, requerido =True))
+        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True))
         
         listobject =  ListDialog(self.controle, 'generos', 'Generos' )
         widget = listobject.make_widget(fields)
@@ -80,8 +79,44 @@ class Generos:
         self.w_generos.show_all()
         self.w_generos.show()
 #-----------------------------------------------------    
-
 class Filmes:
+    def close(self,w):
+        self.w_filmes.destroy()
+
+    def __init__(self, controle):
+ #----Janela       
+        self.w_filmes = gtk.Dialog()
+        self.w_filmes.set_position(gtk.WIN_POS_CENTER)
+        self.w_filmes.connect("destroy", self.close)
+        self.w_filmes.set_title("CEF SHOP - Cadastro de Filmes ")
+        self.w_filmes.set_size_request(700,600)
+        self.w_filmes.set_border_width(8)
+        self.controle = controle
+        
+#-----ListObject
+        fields=[]
+        fields.append(FieldType('cod_filme', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(FieldType('titulo', 'Titulo', str, 0, None, searchable = True,requerido = True))
+        fields.append(FieldType('cod_genero', 'Genero',requerido = True, tabelacombo='generos'))
+        fields.append(FieldType('cod_categoria', 'Categoria', None,requerido = True, tabelacombo='categorias_dvd'))
+        fields.append(FieldType('quantidade', 'Quantidade',int, 0, None,requerido = True))
+        
+        listobject =  ListDialog(self.controle, 'filmes', 'Filmes' )
+        widget = listobject.make_widget(fields)
+        
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+
+#-----Empacota e mostra
+        self.w_filmes.action_area.pack_start(button_close, False, True, 0)        
+        self.w_filmes.vbox.pack_start(widget,True, True, 2)
+        
+        self.w_filmes.show_all()
+        self.w_filmes.show()
+#-----------------------------------------------------    
+
+class Filmes_old:
     
     def close(self,w):
         self.w_filmes.destroy()

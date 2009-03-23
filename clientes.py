@@ -7,7 +7,7 @@ from kiwi.ui.objectlist import Column, ObjectList
 
 from notify import Notify
 from iconmenu import iconMenuItem
-
+from listdialog import FieldType, ListDialog
 
 def entry_activate_cb(entry, lista, data):
     text = entry.get_text()
@@ -84,6 +84,45 @@ class Cliente:
         return '<Cliente %s>' % self.nome
 
 class Cadastro_clientes:
+    def close(self,w):
+        self.w_clientes.destroy()
+
+    def __init__(self, controle):
+ #----Janela       
+        self.w_clientes = gtk.Dialog()
+        self.w_clientes.set_position(gtk.WIN_POS_CENTER)
+        self.w_clientes.connect("destroy", self.close)
+        self.w_clientes.set_title("CEF SHOP - Cadastrar Categorias de Dvds ")
+        self.w_clientes.set_size_request(800,600)
+        self.w_clientes.set_border_width(8)
+        self.controle = controle
+        
+#-----ListObject
+        fields=[]
+        fields.append(FieldType('cod_cliente', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True,requerido = True))
+        fields.append(FieldType('endereco', 'Endereço', str, 0, None,requerido = False))
+        fields.append(FieldType('telefone', 'Telefone', str, 0, None,requerido = False))
+        fields.append(FieldType('bairro', 'Bairro', str, 0, None,requerido = False))
+        fields.append(FieldType('cidade', 'Cidade', str, 0, None,requerido = False))
+        fields.append(FieldType('cep', 'Cep', str, 0, None,requerido = False))
+        
+        listobject =  ListDialog(self.controle, 'clientes', 'Clientes' )
+        widget = listobject.make_widget(fields)
+        
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+
+#-----Empacota e mostra
+        self.w_clientes.action_area.pack_start(button_close, False, True, 0)        
+        self.w_clientes.vbox.pack_start(widget,True, True, 2)
+        
+        self.w_clientes.show_all()
+        self.w_clientes.show()
+#-----------------------------------------------------    
+
+class Cadastro_clientes_old:
     def set_controle(self, controle):
         self.controle = controle
         

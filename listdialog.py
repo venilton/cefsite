@@ -7,15 +7,15 @@ import gtk
 from kiwi.datatypes import currency, converter
 from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
 from kiwi.ui.widgets.entry import ProxyEntry
+from kiwi.ui.comboentry import ComboEntry
 from kiwi.ui.dialogs import yesno
 from kiwi.utils import gsignal, quote
 
 from iconmenu import iconMenuItem
 
-
 class FieldType:
     """ Classe que define um campo no diálogo ListDialog. """
-    def __init__(self, field_name, titulo, tipo, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False, requerido = False):
+    def __init__(self, field_name, titulo, tipo = str, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False, requerido = False, tabelacombo=""):
         self.field_name = field_name
         self.titulo = titulo or field_name
         self.tipo = tipo
@@ -28,6 +28,7 @@ class FieldType:
         self.searchable = searchable
         self.identificador = identificador
         self.requerido = requerido
+        self.tabelacombo = tabelacombo
 
 class ListToolButton:
     """ Classe que define um botão no Toolbar. """
@@ -52,9 +53,10 @@ class ListDialog:
     """ Diálogo de edição de uma tabela com botões padrão e uma lista de campos. """
     def __init__(self, controle, tabela, titulo):
         """ controle é um objeto da classe Controle.
-            tabela é o nome da tabela no Modelo.
+            tabela é o nome de uma instancia de Classe no Controle que referencia um tabela no Modelo.
             titulo é nome de leitura da tabela sendo editada (ex. 'Categorias') """
         self.controle = controle
+        self.tabela = getattr(self.controle, tabela)
         self.fields = []
         self.data = []
         self.buttons = []
@@ -67,13 +69,10 @@ class ListDialog:
         self.editing = False
         self.selection = None
         self.do_nothing = False
-        
-        self.controle.listactions.set_table(tabela)
-        
-    def make_widget(self, fields, data = [], custom_buttons = []):
+
+    def make_widget(self, fields, custom_buttons = []):
         """ Cria e retorna o widget que contém o toolbar, a lista e os campos para edição.
             fields é uma lista de FieldType.
-            data é uma lista de objetos que vai no listview.
             custom_buttons é uma lista de ListToolButton que substitui os botões padrão. """
 #-------Campos
         self.fields = []
@@ -81,7 +80,13 @@ class ListDialog:
         for field in fields:
             if field.show_field:
                 field.label = gtk.Label(field.titulo + ":")
-                field.entry = ProxyEntry(field.tipo)
+                if field.tabelacombo:
+                    field.entry = ComboEntry()
+                    tabelacombo = getattr(self.controle, field.tabelacombo)
+                    itens = tabelacombo.combo()
+                    field.entry.prefill(itens)
+                else:
+                    field.entry = ProxyEntry(field.tipo)
             self.fields.append(field)
         
         vbox_main = gtk.VBox()
@@ -99,7 +104,7 @@ class ListDialog:
             self.custom_buttons = [self.tb_novo, self.tb_edit]
         else:
             self.custom_buttons = custom_buttons 
-        
+
         for tool_button in self.custom_buttons:
             toolbar.insert(tool_button.button, -1)
         
@@ -142,7 +147,7 @@ class ListDialog:
         self.notify = self.controle.notify
         self.notify_box = self.notify.get_widget()
         self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
-        self.controle.listactions.set_notify(self.notify)
+        self.tabela.set_notify(self.notify)
 
 #-------Posicionar todos
         frame_lista.add(self.listview)
@@ -214,7 +219,7 @@ class ListDialog:
         self.set_edit_mode(False)
         self.clear_entry()
         self.lista.refresh()
-        if self.editing_new == True:
+        if self.editing_new:
             self.lista.remove(self.newobj)
             self.editing_new = False
             
@@ -225,7 +230,7 @@ class ListDialog:
         self.notify.hide()
         obj = ListItem()
         for field in self.fields:
-            if field.tipo == str:
+            if field.tipo == str or field.tabelacombo:
                 setattr(obj, field.field_name, '')
             else:
                 setattr(obj, field.field_name, converter.from_string(field.tipo, '0'))
@@ -233,15 +238,20 @@ class ListDialog:
 
     def populate(self):
         """Popula a lista com os itens"""
-        itens = self.controle.listactions.listar()
+        itens = self.tabela.listar()
         objetos = []
         for item in itens:
             obj = ListItem()
             for field in self.fields:
-                setattr(obj, field.field_name, item[field.field_name])
+                if not field.tabelacombo:
+                    setattr(obj, field.field_name, item[field.field_name])
+                else:
+                    tabelacombo = getattr(self.controle, field.tabelacombo)
+                    descricao = tabelacombo.item_descricao(item[field.field_name])
+                    setattr(obj, field.field_name, descricao[0][0])
             objetos.append(obj)
         return objetos
-
+        
     def default_new(self, sender):
         self.newobj = self.new_method() #Chama new_method para criar um novo item
         self.data.append(self.newobj)
@@ -265,9 +275,11 @@ class ListDialog:
         
     def populate_entry(self, item):
         """Preenche os campos com os itens"""
+        self.notify.hide()
         for field in self.fields:
             if field.entry:
-                field.entry.set_text(str(getattr(item, field.field_name)))
+                if not field.tabelacombo:
+                    field.entry.set_text(str(getattr(item, field.field_name)))
         self.set_edit_mode(True)
         
     def clear_entry(self):
@@ -345,16 +357,34 @@ class ListDialog:
         record = {}
         #Insere novo
         if self.editing_new :
-            insert = self.controle.listactions.insert(self.fields, self.newobj)
-            if insert == True:
+            record = self.tabela.insert(self.fields)
+            if record :
+                for field in self.fields:
+                    if field.identificador:
+                        setattr(self.newobj, field.field_name, record['last_id'])
+                    elif field.tabelacombo:
+                        tabelacombo = getattr(self.controle, field.tabelacombo)
+                        descricao = tabelacombo.item_descricao(record[field.field_name])
+                        setattr(self.newobj, field.field_name, descricao[0][0])
+                    else:
+                        setattr(self.newobj, field.field_name, record[field.field_name])
                 self.editing_new = False
                 self.lista.refresh()
                 self.clear_entry()
                 self.hide_notify()
-        #Edita
+         #Edita
         else:
-            update = self.controle.listactions.update(self.fields, self.item)
-            if update == True:
+            record = self.tabela.update(self.fields, self.item)
+            if record:
+                for field in self.fields:
+                    if field.identificador:
+                        pass
+                    elif field.tabelacombo:
+                        tabelacombo = getattr(self.controle, field.tabelacombo)
+                        descricao = tabelacombo.item_descricao(record[field.field_name])
+                        setattr(self.item, field.field_name, descricao[0][0])
+                    else:
+                        setattr(self.item, field.field_name, record[field.field_name])
                 self.lista.refresh()
                 self.clear_entry()
                 self.hide_notify()

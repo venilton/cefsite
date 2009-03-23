@@ -38,11 +38,7 @@ class Abertura():
         self.w_open_caixa.vbox.pack_start(vbox, True, False, 5)
         
 #-------area de notificacao
-        self.notify = self.controle.notify
-        self.notify_box = self.notify.get_widget()
-        self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
-        self.controle.listactions.set_notify(self.notify)
-        self.w_open_caixa.vbox.pack_start(self.notify_box,False, True, 4)
+        
 
 #-------Botoes
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
@@ -59,7 +55,6 @@ class Abertura():
     
 #------Mostra tudo
         self.w_open_caixa.show_all()
-        self.notify_box.hide()
         self.w_open_caixa.show()
         
 class Fechamento():

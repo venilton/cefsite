@@ -36,7 +36,6 @@ class Loja:
     
     def close_notification(self, widget):
         self.controle.main_status = False
-        self.notify_box.hide()
 
     def open_cad_clientes (self, widget):
         Cadastro_clientes(self.controle)
@@ -56,7 +55,6 @@ class Loja:
         
     def logoff(self,widget):
         self.controle.main_status = False
-        self.notify_box.hide()
         self.w_loja.destroy()
         self.controle.logoff()
         
@@ -140,15 +138,11 @@ class Loja:
         vbox_loca.add(button_devolucao)
 
 #-------area de notificacao
-        self.notify = self.controle.notify
-        self.notify_box = self.notify.get_widget()
-        self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
-        self.controle.listactions.set_notify(self.notify)
-        vbox_main.pack_start(self.notify_box,False, True, 4)
+       
         
 #-------Mostra tudo
         self.w_loja.show_all()
-        self.notify_box.hide()
+
         self.w_loja.show()
 
 class Venda:

@@ -53,8 +53,12 @@ class TabelaControle:
     def set_notify(self, notify):
         self.notify = notify
     
-    def validate(self, campos):
-        """ Validação dos campos dessa tabela. A ser implementado nas classes finais. """
+    def validate(self, field):
+        """ Validação dos campos dessa tabela."""
+        if field.requerido :
+            if field.entry.get_text() == '':
+                self.notify.show_notify('erro','Campo %s não deve ficar em branco' % field.field_name)
+                return False
         return True
     
     def obrigatorio(self, valor, mensagem = ''):
@@ -67,13 +71,36 @@ class TabelaControle:
             return True
 
     #As funções a seguir demonstram um comportamento padrão. Podem ser substituídas.
-    def insert(self, campos):
-        if self.tabela:
-            return self.tabela.insert_item(campos)
+    def insert(self, fields):
+        record = {}
+        for field in fields:
+            validate = self.validate(field)
+            if validate == True:
+                if not field.identificador:
+                    if field.tabelacombo:
+                        record[field.field_name] = field.entry.get_selected_data()
+                    elif field.entry:
+                        record[field.field_name] = field.entry.get_text()
+            else:
+                return False
+        record['last_id'] = self.tabela.insert_item(record)
+        return record
     
-    def update(self, cod, campos):
-        if self.tabela:
-            return self.tabela.update_item(campos, cod, chaves)
+    def update(self, fields, item):
+        record = {}
+        for field in fields:
+            validate = self.validate(field)
+            if validate == True:
+                if field.identificador:
+                    cod = (str(getattr(item, field.field_name)))
+                else:
+                    if field.entry:
+                        record[field.field_name] = field.entry.get_text()
+                        #setattr(item, field.field_name, record[field.field_name])
+            else:
+                return False
+        self.tabela.update_item(cod, record)
+        return record
         
     def delete(self, cod):
         if self.tabela:
@@ -106,6 +133,9 @@ class Controle:
         
         #instancias das classes que fazem referencias a tabelas no modelo
         self.categorias_dvd = Categorias_dvd(self.modelo, self.modelo.categorias_dvd)
+        self.generos = Generos(self.modelo, self.modelo.generos)
+        self.clientes = Clientes(self.modelo, self.modelo.clientes)
+        self.filmes = Filmes(self.modelo, self.modelo.filmes)
         
         self.interface.show()
 
@@ -453,13 +483,32 @@ class Controle:
         return self.recebido
 
 class Categorias_dvd(TabelaControle):
-    def validate(self, campos):
-        if not self.obrigatorio(campos['descricao'], 'Campo Descrição não deve ficar em branco.'):
-            return False
-        elif not self.obrigatorio(campos['preco'], 'Campo Preço não deve ficar em branco.'):
-            return False
-        else:
-            return True
+    def combo(self):
+        lista = []
+        rows = self.tabela.select_all_records()
+        for row in rows:
+            lista.append((row['descricao'], row['cod_categoria']))
+        return lista
+        
+    def item_descricao(self, cod):
+        return self.tabela.select_categoria_dvd(cod)
+        
+class Generos(TabelaControle):
+    def combo(self):
+        lista = []
+        rows = self.tabela.select_all_records()
+        for row in rows:
+            lista.append((row['descricao'], row['cod_genero']))
+        return lista
+        
+    def item_descricao(self, cod):
+        return self.tabela.select_genero(cod)
+        
+class Clientes(TabelaControle):
+    pass
+
+class Filmes(TabelaControle):
+    pass
     
 class Notification:
     def __init__(self):
