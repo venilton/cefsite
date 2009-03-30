@@ -3,14 +3,17 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+
+#from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel, ColoredColumn
+from kiwi.datatypes import currency
+
 from controle import * #FixME: all to controle
 from iconmenu import iconMenuItem
 from clientes import Cadastro_clientes
 from locacao import Locar, Devolver
 from guicommon import SelectDialog
-
-from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel, ColoredColumn
 from listdialog import FieldType, ListDialog
+
 
 class Loja:   
     def createMenus(self, vbox, window):
@@ -331,7 +334,7 @@ class Contas:
         fields=[]
         fields.append(FieldType('cod_conta', '#', int, 0, None, True, False, identificador = True,))
         fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
-        fields.append(FieldType('faturar', '% fatura', float, 0, None, searchable = False, requerido = False))
+        fields.append(FieldType('faturar', '% fatura', int, 0, None, searchable = False, requerido = False))#FixMe: to float, conversion error
         
         listobject =  ListDialog(self.controle, 'contas', 'Contas')
         widget = listobject.make_widget(fields)
@@ -365,10 +368,10 @@ class Produtos:
 #-----ListObject
         fields=[]
         fields.append(FieldType('cod_produto', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('cod_categoria', 'Categoria', int, 0, None, True, False, tabelacombo = "categorias"))
+        fields.append(FieldType('cod_categoria', 'Categoria', requerido = True,  tabelacombo = "categorias"))
         fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
         fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True, requerido = False))
-        fields.append(FieldType('preco', 'Preço', float, 0, None, searchable = True, requerido = True))
+        fields.append(FieldType('preco', 'Preço', currency, 0, None, searchable = True, requerido = True))
         fields.append(FieldType('ativo', 'Ativo', int, 0, None, show_in_list = False, searchable = True, requerido = False))
         
         listobject =  ListDialog(self.controle, 'produtos', 'Produtos')

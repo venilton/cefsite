@@ -6,7 +6,7 @@ import gtk
 from iconmenu import iconMenuItem #FixME: to controle
 from locacao import Locados, Atrasados #FixMe: to controle
 from dvds import * #FixMe: to controle
-import loja
+import loja #FixMe: admin importa loja? controle 
 
 class Admin:
     def createMenus(self, vbox):
@@ -63,7 +63,7 @@ class Admin:
         self.w_admin.set_position(gtk.WIN_POS_CENTER)
         self.w_admin.connect("delete_event", lambda w,e: gtk.main_quit())
         self.w_admin.set_title("CEF SHOP - Administração")
-        self.w_admin.set_size_request(580,280)
+        self.w_admin.set_size_request(580,350)
         self.controle = controle
         #self.notify_box = Notify()
 

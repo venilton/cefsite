@@ -73,7 +73,7 @@ class TabelaControle:
                         record[field.field_name] = field.entry.get_text()
             else:
                 return False
-        record['last_id'] = self.tabela.insert_item(record)
+        record['last_id'] = self.tabela.insert(record)
         return record
     
     def update(self, fields, item):
@@ -99,6 +99,9 @@ class TabelaControle:
         
     def listar(self):
         return self.tabela.select_all_records()
+
+    def item_descricao(self, cod):
+        return ""
 
 class Controle:
     def __init__(self):
@@ -130,11 +133,16 @@ class Controle:
     
     def start(self):
         #instancias das classes que fazem referencias a tabelas no modelo
+        #locadora
         self.categorias_dvd = Categorias_dvd(self.modelo, self.modelo.categorias_dvd)
         self.generos = Generos(self.modelo, self.modelo.generos)
         self.clientes = Clientes(self.modelo, self.modelo.clientes)
         self.filmes = Filmes(self.modelo, self.modelo.filmes)
         self.dvds = Dvds(self.modelo, self.modelo.dvds)
+        #loja
+        self.categorias = Categorias(self.modelo, self.modelo.categorias)
+        self.contas = Contas(self.modelo, self.modelo.contas)
+        self.produtos = Contas(self.modelo, self.modelo.produtos)
         
         self.interface.show()
 
@@ -326,15 +334,6 @@ class Controle:
         else:
             raise PedidoError, "Só é possível fechar pedidos em aberto."
 
-    def rs_estoque(self):
-        rows = self.modelo.estoque.listar_estoque()
-        cols = []
-        cols.append(Column('cod_produto', title="Código", justify=gtk.JUSTIFY_RIGHT))
-        cols.append(Column('nome', title="Descrição", sorted=True))
-        cols.append(Column('localiz', title="Local"))
-        cols.append(Column('quantidade', title="Quantidade"))
-        return Recordset(rows, cols)
-
     def cliente_devolucao(self):
         return self.cod_cliente_devolucao
         
@@ -465,7 +464,7 @@ class Filmes(TabelaControle):
                         record[field.field_name] = field.entry.get_text()
             else:
                 return False
-        record['last_id'] = self.tabela.insert_item(record)
+        record['last_id'] = self.tabela.insert(record)
         quantidade =int(record['quantidade'])
         for quant in range(quantidade):
             self.modelo.dvds.insert_item(record['last_id'])
@@ -473,7 +472,7 @@ class Filmes(TabelaControle):
         return record
 
 class Dvds(TabelaControle):
-     def listar(self):
+    def listar(self):
         records = self.tabela.select_all_records()
         for record in records:
             titulo = self.tabela.select_titulo(record['cod_dvd'])
@@ -482,6 +481,24 @@ class Dvds(TabelaControle):
 
 #Clientes
 class Clientes(TabelaControle):
+    pass
+
+#loja
+class Categorias(TabelaControle):
+    def combo(self):
+        lista = []
+        rows = self.tabela.select_all_records()
+        for row in rows:
+            lista.append((row['nome'], row['cod_categoria']))
+        return lista
+        
+    def item_descricao(self, cod):
+        return self.tabela.select_categoria(cod)
+
+class Contas(TabelaControle):
+    pass
+
+class Produtos(TabelaControle):
     pass
 
 #notify

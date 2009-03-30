@@ -72,6 +72,8 @@ class Tabela:
         if self.modelo.in_transaction == 0:
             #Nenhuma transação aberta: realiza auto-commit
             self.modelo.bd.commit()
+        return self.modelo.last_insert_id()
+        
 
     def runQuery(self, query, params = None):
         """ Roda uma consulta (select) no banco de dados. """
@@ -117,7 +119,6 @@ class Tabela:
             values.append(campos[campo])
         sql1 = sql1[:-2] + ')'
         sql2 = sql2[:-2] + ')'
-
         return self.runSql(sql1 + sql2, values)
 
     def update(self, campos, chaves={}):
@@ -168,10 +169,6 @@ class Cliente(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_cliente', 'nome', 'telefone', 'celular', 'endereco', 'bairro', 'cidade', 'estado', 'cep']
 
-    def insert_item(self, campos):
-        self.insert(campos)
-        return self.modelo.last_insert_id()
-
     def update_item(self, cod_cliente, campos):
         return self.update(campos, {'cod_cliente': cod_cliente})
 
@@ -186,19 +183,7 @@ class Conta(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_conta', 'nome', 'faturar']
 
-    def insert_item(self, nome, faturar):
-        campos = {}
-        if nome is not None:     campos['nome'] = nome
-        if faturar is not None:  campos['faturar'] = faturar
-
-        self.insert(campos)
-        return self.modelo.last_insert_id()
-
-    def update_item(self, cod_conta, nome, faturar):
-        campos = {}
-        if nome is not None:     campos['nome'] = nome
-        if faturar is not None:  campos['faturar'] = faturar
-
+    def update_item(self, cod_conta, campos):
         return self.update(campos, {'cod_conta': cod_conta })
 
 class Caixa(Tabela):
@@ -224,10 +209,6 @@ class Filme(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_filme', 'cod_genero', 'cod_categoria','titulo', 'quantidade']
 
-    def insert_item(self, campos):
-        self.insert(campos)
-        return self.modelo.last_insert_id()
-
     def update_item(self, cod_filme, campos):
         return self.update(campos, {'cod_filme': cod_filme})
 
@@ -238,10 +219,6 @@ class Genero(Tabela):
     def __init__(self, modelo, nome_tabela='generodvd'):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_genero', 'descricao']
-
-    def insert_item(self,campos):
-        self.insert(campos)
-        return self.modelo.last_insert_id()
 
     def update_item(self, cod_genero, campos):
         return self.update(campos, {'cod_genero': cod_genero })
@@ -259,11 +236,7 @@ class Categoria_dvd(Tabela):
     def __init__(self, modelo, nome_tabela='categoria_dvd'):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_categoria', 'descricao', 'preco']
- 
-    def insert_item(self, campos):
-        self.insert(campos)
-        return self.modelo.last_insert_id()
- 
+  
     def update_item(self, cod_categoria, campos):
         return self.update(campos, {'cod_categoria': cod_categoria })
  
@@ -287,7 +260,6 @@ class DVD(Tabela):
     def insert_item(self, cod_filme):
         campos = {}
         if cod_filme is not None:   campos['cod_filme'] = cod_filme
-
         self.insert(campos)
         return self.modelo.last_insert_id()
 
@@ -338,50 +310,29 @@ class Categoria(Tabela):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_categoria', 'cod_conta_padrao', 'nome', 'cod_categoria_pai']
 
-    def insert_item(self, cod_conta_padrao, nome, cod_categoria_pai):
-        campos = {}
-        if cod_conta_padrao is not None:    campos['cod_conta_padrao'] = cod_conta_padrao
-        if nome is not None:                campos['nome'] = nome
-        if cod_categoria_pai is not None:   campos['cod_categoria_pai'] = cod_categoria_pai
-
+    def insert_item(self, campos):
         self.insert(campos)
         return self.modelo.last_insert_id()
 
-    def update_item(self, cod_categoria, cod_conta_padrao, nome, cod_categoria_pai):
-        campos = {}
-        if cod_conta_padrao is not None:    campos['cod_conta_padrao'] = cod_conta_padrao
-        if nome is not None:                campos['nome'] = nome
-        if cod_categoria_pai is not None:   campos['cod_categoria_pai'] = cod_categoria_pai
-
+    def update_item(self, cod_categoria, campos):
         return self.update(campos, {'cod_categoria': cod_categoria })
 
     def locate_item(self, name):
         return self.runQuery("SELECT * FROM categoria WHERE nome like '%%%s%%'" % (name))
 
+    def select_categoria(self, cod):
+        return self.runQuery("SELECT nome FROM categoria WHERE cod_categoria=%s", [cod])
+        
 class Produto(Tabela):
     def __init__(self, modelo, nome_tabela='produto'):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_produto', 'cod_categoria', 'nome', 'descricao', 'preco', 'ativo']
 
-    def insert_item(self, cod_categoria, nome, descricao, preco, ativo):
-        campos = {}
-        if cod_categoria is not None:    campos['cod_categoria'] = cod_categoria
-        if nome is not None:             campos['nome'] = nome
-        if descricao is not None:        campos['descricao'] = descricao
-        if preco is not None:            campos['preco'] = preco
-        if ativo is not None:            campos['ativo'] = ativo
-
+    def insert_item(self, campos):
         self.insert(campos)
         return self.modelo.last_insert_id()
 
-    def update_item(self, cod_produto, cod_categoria, nome, descricao, preco, ativo):
-        campos = {}
-        if cod_categoria is not None:    campos['cod_categoria'] = cod_categoria
-        if nome is not None:             campos['nome'] = nome
-        if descricao is not None:        campos['descricao'] = descricao
-        if preco is not None:            campos['preco'] = preco
-        if ativo is not None:            campos['ativo'] = ativo
-
+    def update_item(self, cod_produto, campos):
         return self.update(campos, {'cod_produto': cod_produto })
 
     def locate_item(self, nome):
