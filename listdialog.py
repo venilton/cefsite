@@ -11,7 +11,6 @@ from kiwi.ui.comboentry import ComboEntry
 from kiwi.ui.dialogs import yesno
 from kiwi.utils import gsignal, quote
 
-from iconmenu import iconMenuItem
 
 class FieldType:
     """ Classe que define um campo no diálogo ListDialog. """
@@ -20,7 +19,7 @@ class FieldType:
         self.titulo = titulo or field_name
         self.tipo = tipo
         self.tamanho = tamanho
-        self.mask = mask #Não usado ainda
+        self.mask = mask 
         self.show_in_list = show_in_list
         self.show_field = show_field
         self.label = None
@@ -87,6 +86,7 @@ class ListDialog:
                     field.entry.prefill(itens)
                 else:
                     field.entry = ProxyEntry(field.tipo)
+                    field.entry.set_mask(field.mask)
             self.fields.append(field)
         
         vbox_main = gtk.VBox()
@@ -144,7 +144,7 @@ class ListDialog:
         vbox_dados_buttons.add(self.button_cancel)
         
 #-------Notify
-        self.notify = self.controle.notify
+        self.notify = self.controle.notify()
         self.notify_box = self.notify.get_widget()
         self.notify.show_notify('info','Clique em NOVO para adicionar um novo item')
         self.tabela.set_notify(self.notify)
@@ -248,7 +248,10 @@ class ListDialog:
                 else:
                     tabelacombo = getattr(self.controle, field.tabelacombo)
                     descricao = tabelacombo.item_descricao(item[field.field_name])
-                    setattr(obj, field.field_name, descricao[0][0])
+                    try:
+                        setattr(obj, field.field_name, descricao[0][0])
+                    except:
+                        setattr(obj, field.field_name, descricao)
             objetos.append(obj)
         return objetos
         
@@ -278,7 +281,9 @@ class ListDialog:
         self.notify.hide()
         for field in self.fields:
             if field.entry:
-                if not field.tabelacombo:
+                if field.tabelacombo:
+                    field.entry.select_item_by_label(str(getattr(item, field.field_name)))
+                else:
                     field.entry.set_text(str(getattr(item, field.field_name)))
         self.set_edit_mode(True)
         
@@ -382,7 +387,10 @@ class ListDialog:
                     elif field.tabelacombo:
                         tabelacombo = getattr(self.controle, field.tabelacombo)
                         descricao = tabelacombo.item_descricao(record[field.field_name])
-                        setattr(self.item, field.field_name, descricao[0][0])
+                        try:
+                            setattr(self.item, field.field_name, descricao[0][0])
+                        except:
+                            setattr(self.item, field.field_name, descricao)
                     else:
                         setattr(self.item, field.field_name, record[field.field_name])
                 self.lista.refresh()

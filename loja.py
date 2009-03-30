@@ -3,8 +3,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from controle import *
-from notify import Notify
+from controle import * #FixME: all to controle
 from iconmenu import iconMenuItem
 from clientes import Cadastro_clientes
 from locacao import Locar, Devolver
@@ -29,13 +28,6 @@ class Loja:
         #menuitem.connect('activate', self.close) # FixMe : fechar implica passar para a classe login destroy event
         menu.add(menuitem)
 
-    def notification (self, widget, focus):
-        status = self.controle.main_notify()
-        if status == True:
-            self.notify_box.show()
-    
-    def close_notification(self, widget):
-        self.controle.main_status = False
 
     def open_cad_clientes (self, widget):
         Cadastro_clientes(self.controle)
@@ -58,14 +50,14 @@ class Loja:
         self.w_loja.destroy()
         self.controle.logoff()
         
-    def __init__(self,controle):
+    def __init__(self, controle):
         self.w_loja = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.w_loja.set_position(gtk.WIN_POS_CENTER)
         self.w_loja.connect("delete_event", lambda w,e: gtk.main_quit())
-        self.w_loja.connect("focus_in_event", self.notification)
+        #self.w_loja.connect("focus_in_event", self.notification)
         self.w_loja.set_title("CEF SHOP - Loja")
         self.w_loja.set_size_request(580,280)
-        self.controle = controle
+        #self.controle = controle
 
 #---Botoes
         button_clientes = gtk.Button("Clientes")

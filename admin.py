@@ -3,10 +3,9 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from notify import Notify
-from iconmenu import iconMenuItem
-from locacao import Locados, Atrasados
-from dvds import *
+from iconmenu import iconMenuItem #FixME: to controle
+from locacao import Locados, Atrasados #FixMe: to controle
+from dvds import * #FixMe: to controle
 
 class Admin:
     def createMenus(self, vbox):
@@ -36,6 +35,9 @@ class Admin:
     def open_filmes(self, widget):
         Filmes(self.controle)
 
+    def open_dvds(self, widget):
+        Dvds(self.controle)
+
     def open_locados(self, widget):
         Locados(self.controle)
 
@@ -53,7 +55,7 @@ class Admin:
         self.w_admin.set_title("CEF SHOP - Administração")
         self.w_admin.set_size_request(580,280)
         self.controle = controle
-        self.notify_box = Notify()
+        #self.notify_box = Notify()
 
 #---Botoes
         button_generos = gtk.Button("Generos")
@@ -64,6 +66,9 @@ class Admin:
         
         button_filmes = gtk.Button("Filmes")
         button_filmes.connect("clicked",self.open_filmes)
+       
+        button_dvds = gtk.Button("DvDs")
+        button_dvds.connect("clicked",self.open_dvds)
        
         button_locados = gtk.Button("Locados")
         button_locados.connect("clicked",self.open_locados)
@@ -101,6 +106,7 @@ class Admin:
         vbox_cad.add(button_categorias_dvd)
         vbox_cad.add(button_generos)
         vbox_cad.add(button_filmes)
+        vbox_cad.add(button_dvds)
 
 #------Frame Controle
         frame_controle = gtk.Frame("Controle")
@@ -115,10 +121,10 @@ class Admin:
         vbox_controle.add(button_atrasados)
         
 #-------area de notificacao
-        vbox_main.pack_start(self.notify_box,False, True, 4)
+        #vbox_main.pack_start(self.notify_box,False, True, 4)
 
 #-------Mostra tudo
         self.w_admin.show_all()
-        self.notify_box.hide()
+        #self.notify_box.hide()
         self.w_admin.show()
 #-----------------------------------------------------

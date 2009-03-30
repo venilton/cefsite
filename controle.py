@@ -5,11 +5,10 @@ pygtk.require('2.0')
 import gtk
 from datetime import date
 
-from kiwi.ui.objectlist import Column
-from kiwi.accessor import ksetattr
-
 from querys import Modelo , Caixa
 from login import Login
+from loja import Loja
+from admin import Admin
 from notify import Notify
 
 
@@ -18,29 +17,6 @@ class ControleError(Exception): pass
 class EmBranco(ControleError): pass
 class CodigoInvalido(ControleError): pass
 class PedidoError(ControleError): pass
-
-#Classe usada para armazenar o resultado de uma consulta ou tabela
-class Record: pass
-class Recordset:
-    def __init__(self, rows, columns):
-        """ Cria um novo Recordset
-        rows é o resultado da query (lista de tuplas)
-        columns é uma lista de Column identificando cada coluna do resultado.
-        """
-        self.columns = columns
-        self.items = []
-        # Cria os objetos Record e altera cada atributo
-        for row in rows:
-            rec = Record()
-            for i in range(len(self.columns)):
-                ksetattr(rec, columns[i].attribute, row[i])
-            self.items.append(rec)
-
-    def row_count(self):
-        return len(self.items)
-
-    def col_count(self):
-        return len(self.columns)
 
 class TabelaControle:
     """ Essa classe controla uma funcionalidade do sistema, por exemplo:
@@ -53,11 +29,25 @@ class TabelaControle:
     def set_notify(self, notify):
         self.notify = notify
     
-    def validate(self, field):
-        """ Validação dos campos dessa tabela."""
-        if field.requerido :
-            if field.entry.get_text() == '':
-                self.notify.show_notify('erro','Campo %s não deve ficar em branco' % field.field_name)
+    def validate(self, fields):
+        """ Validação dos campos dessa tabela.
+            campos é um dicionário. """
+        for field in fields:
+            valor = None
+            try:
+                if field.entry:
+                    #Converte de string para o tipo do campo:
+                    valor = field.tipo(field.entry.get_text())
+            except:
+                self.notify.show_notify('erro', 'Formato inválido no campo %s.' % field.titulo)
+                return False
+            
+            if field.tabelacombo:
+                if not field.entry.get_selected_data():
+                    self.notify.show_notify('erro', 'Selecione um iten da lista de %s.' % field.titulo)
+                    return False
+                
+            if field.requerido and not self.obrigatorio(valor, 'Campo %s não deve ficar em branco.' % field.titulo):
                 return False
         return True
     
@@ -73,8 +63,8 @@ class TabelaControle:
     #As funções a seguir demonstram um comportamento padrão. Podem ser substituídas.
     def insert(self, fields):
         record = {}
+        validate = self.validate(fields)
         for field in fields:
-            validate = self.validate(field)
             if validate == True:
                 if not field.identificador:
                     if field.tabelacombo:
@@ -88,15 +78,16 @@ class TabelaControle:
     
     def update(self, fields, item):
         record = {}
+        validate = self.validate(fields)
         for field in fields:
-            validate = self.validate(field)
             if validate == True:
                 if field.identificador:
                     cod = (str(getattr(item, field.field_name)))
                 else:
-                    if field.entry:
+                    if field.tabelacombo:
+                        record[field.field_name] = field.entry.get_selected_data()
+                    elif field.entry:
                         record[field.field_name] = field.entry.get_text()
-                        #setattr(item, field.field_name, record[field.field_name])
             else:
                 return False
         self.tabela.update_item(cod, record)
@@ -113,11 +104,20 @@ class Controle:
     def __init__(self):
         self.status = False
         self.main_status = False
-        self.notify_text = ''
         self.cliente_encontrado = False
         self.dadoscliente = [0][0]
         self.itens = []
         self.recebido = False
+    
+    def notify(self):
+        notify = Notification()
+        return notify
+    
+    def open_loja(self, controle):
+        Loja(controle)
+        
+    def open_admin(self, controle):
+        Admin(controle)
         
     def set_modelo(self, modelo):
         self.modelo = modelo
@@ -129,13 +129,12 @@ class Controle:
         self.interface = interface
     
     def start(self):
-        self.notify = Notification()
-        
         #instancias das classes que fazem referencias a tabelas no modelo
         self.categorias_dvd = Categorias_dvd(self.modelo, self.modelo.categorias_dvd)
         self.generos = Generos(self.modelo, self.modelo.generos)
         self.clientes = Clientes(self.modelo, self.modelo.clientes)
         self.filmes = Filmes(self.modelo, self.modelo.filmes)
+        self.dvds = Dvds(self.modelo, self.modelo.dvds)
         
         self.interface.show()
 
@@ -151,30 +150,6 @@ class Controle:
             raise CodigoInvalido , 'Código deve conter apenas números'
         return cod
 
-#notificacao
-    def get_notify_label(self, notify_label):
-            self.notify_label = notify_label
-    
-    def get_main_notify_label(self, notify_label):
-            self.main_notify_label = notify_label
-    
-    def notify(self):
-        if self.status == True:
-            self.notify_label.set_text(self.notify_text)
-            self.status = False
-            return True
-        else:
-            self.notify_label.set_text(self.notify_text)
-            return False
-
-    def main_notify(self):
-        if self.main_status == True:
-            self.main_notify_label.set_text(self.notify_text)
-            self.main_status = False
-            return True
-        else:
-            return False
-            
 #clientes
     def cliente_localizado(self):
         if self.cliente_encontrado == True:
@@ -182,21 +157,6 @@ class Controle:
             return True , self.dadoscliente
         else:
             return False, self.dadoscliente
-        
-    def cadastra_cliente(self, cod_cliente, name, telefone, celular, endereco, bairro, cidade, estado, cep, editando):
-        if name == '':
-            self.notify_text = 'ERRO: Campo NOME precisa ser preenchido!'
-            self.status = True
-            raise  EmBranco , 'Nome deve ser preenchido'
-        elif editando == True:
-            self.modelo.clientes.update_item(cod_cliente, name, telefone, celular, endereco, bairro, cidade, estado, cep)
-            self.notify_text = 'Cliente ' + name +' Editado com sucesso!'
-            self.status = True
-        else:    
-            self.modelo.clientes.insert_item(name, telefone, celular, endereco, bairro, cidade, estado, cep)
-            self.notify_text = 'Cliente ' + name +' cadastrado com sucesso!'
-            self.status = False
-            self.main_status = True
         
     def locate_clientes(self):
         rows = self.modelo.clientes.select_all()
@@ -291,19 +251,6 @@ class Controle:
         rows = self.modelo.generos.select_all()
         return rows
     
-    def cadastra_filme(self, genero_ativo, generos, categoria_ativa, categorias, titulo, quantidade):
-        if genero_ativo >= 0 and categoria_ativa >=0:  
-            genero = generos[genero_ativo][1]
-            categoria = categorias[categoria_ativa][1]
-            cod_genero = self.modelo.generos.select_genero_desc(genero)
-            cod_categoria = self.modelo.categorias_dvd.select_categoria_desc(categoria)
-            cod_filme = self.modelo.filmes.insert_item(cod_genero[0][0], cod_categoria[0][0], titulo, quantidade)
-            for quant in range(quantidade):
-                self.modelo.dvds.insert_item(cod_filme)
-            return True
-        else:
-            return False
-        
     def listar_locados(self):
         rows = self.modelo.locados.select_locados()
         return rows
@@ -482,6 +429,7 @@ class Controle:
     def get_receber_status(self):
         return self.recebido
 
+#locação
 class Categorias_dvd(TabelaControle):
     def combo(self):
         lista = []
@@ -504,12 +452,39 @@ class Generos(TabelaControle):
     def item_descricao(self, cod):
         return self.tabela.select_genero(cod)
         
+class Filmes(TabelaControle):
+    def insert(self, fields):
+        record = {}
+        validate = self.validate(fields)
+        for field in fields:
+            if validate == True:
+                if not field.identificador:
+                    if field.tabelacombo:
+                        record[field.field_name] = field.entry.get_selected_data()
+                    elif field.entry:
+                        record[field.field_name] = field.entry.get_text()
+            else:
+                return False
+        record['last_id'] = self.tabela.insert_item(record)
+        quantidade =int(record['quantidade'])
+        for quant in range(quantidade):
+            self.modelo.dvds.insert_item(record['last_id'])
+        print record
+        return record
+
+class Dvds(TabelaControle):
+     def listar(self):
+        records = self.tabela.select_all_records()
+        for record in records:
+            titulo = self.tabela.select_titulo(record['cod_dvd'])
+            record['titulo'] = titulo[0][0]
+        return records
+
+#Clientes
 class Clientes(TabelaControle):
     pass
 
-class Filmes(TabelaControle):
-    pass
-    
+#notify
 class Notification:
     def __init__(self):
         self.notification = Notify()

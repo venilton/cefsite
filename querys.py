@@ -283,7 +283,7 @@ class DVD(Tabela):
     def __init__(self, modelo, nome_tabela='dvd'):
         Tabela.__init__(self, modelo, nome_tabela)
         self.all_fields = ['cod_dvd', 'cod_filme']
-
+    
     def insert_item(self, cod_filme):
         campos = {}
         if cod_filme is not None:   campos['cod_filme'] = cod_filme
@@ -297,6 +297,9 @@ class DVD(Tabela):
 
         return self.update(campos, {'cod_dvd': cod_dvd })
 
+    def select_titulo(self, cod):
+        return self.runQuery("SELECT f.titulo FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
+    
     def select_dvd(self, cod):
         return self.runQuery("SELECT d.cod_dvd, f.titulo, f.cod_categoria FROM dvd d, filme f WHERE f.cod_filme = d.cod_filme AND d.cod_dvd = %s", (cod))
 

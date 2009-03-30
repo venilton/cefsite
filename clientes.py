@@ -3,9 +3,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from kiwi.ui.objectlist import Column, ObjectList
 
-from notify import Notify
 from iconmenu import iconMenuItem
 from listdialog import FieldType, ListDialog
 

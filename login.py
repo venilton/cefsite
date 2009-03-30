@@ -4,9 +4,6 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from loja import Loja
-from admin import Admin
-from caixa import Abertura
 from iconmenu import iconMenuItem
 
 class Login:
@@ -31,20 +28,23 @@ class Login:
         gtk.main_quit()
     
     def open_loja (self, widget):
-        caixa_status = self.controle.get_caixa_status()
-        if caixa_status == 'Closed':
-            Abertura(self.controle)
-        if caixa_status == 'NotClosed':
-            self.controle.close_caixa()
-            Abertura(self.controle)
+        #caixa_status = self.controle.get_caixa_status()
+        #if caixa_status == 'Closed':
+          #  Abertura(self.controle)
+        #if caixa_status == 'NotClosed':
+          #  self.controle.close_caixa()
+            #Abertura(self.controle)
             
-        Loja(self.controle)
+        #Loja(self.controle)
+        
+        self.controle.open_loja(self.controle)
         #list = ListDialog(self.controle, self.controle.modelo.categorias, [], 'Categoria')
         #list.prepare_dialog
         self.w_login.hide()
 
     def open_admin (self, widget):
-        Admin(self.controle)
+        self.controle.open_admin(self.controle)
+        #Admin(self.controle)
         self.w_login.hide()
 
     def __init__(self):
