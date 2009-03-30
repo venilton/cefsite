@@ -6,6 +6,7 @@ import gtk
 from iconmenu import iconMenuItem #FixME: to controle
 from locacao import Locados, Atrasados #FixMe: to controle
 from dvds import * #FixMe: to controle
+import loja
 
 class Admin:
     def createMenus(self, vbox):
@@ -44,6 +45,15 @@ class Admin:
     def open_atrasados(self, widget):
         Atrasados(self.controle)
         
+    def open_categorias(self, widget):
+        loja.Categorias(self.controle)
+    
+    def open_contas(self, widget):
+        loja.Contas(self.controle)
+        
+    def open_produtos(self, widget):
+        loja.Produtos(self.controle)
+
     def logoff(self,widget):
         self.w_admin.destroy()
         self.controle.logoff()
@@ -76,6 +86,16 @@ class Admin:
         button_atrasados = gtk.Button("Atrasados")
         button_atrasados.connect("clicked",self.open_atrasados)
 
+        #--Loja
+        button_categorias = gtk.Button("Categorias")
+        button_categorias.connect("clicked",self.open_categorias)
+        
+        button_contas = gtk.Button("Contas")
+        button_contas.connect("clicked",self.open_contas)
+        
+        button_produtos = gtk.Button("Produtos")
+        button_produtos.connect("clicked",self.open_produtos)
+
 #------Divisao v principal
         vbox_main = gtk.VBox(False, 2)
         self.w_admin.add(vbox_main)     
@@ -89,37 +109,50 @@ class Admin:
 
 #------Divisoes v dos elementos 
         vbox1 = gtk.VBox(True, 1)
-        hbox_main.pack_start(vbox1, True, True, 2)
- 
         vbox2 = gtk.VBox(True, 1)
-        hbox_main.pack_start(vbox2, True, True, 2)
      
 #------Frame cadastro
-        frame_cad = gtk.Frame("Cadastro")
-        vbox1.pack_start(frame_cad, True, True, 2)
+        frame_cad = gtk.Frame("Locadora")
 
         vbox_cad=gtk.VButtonBox()
         vbox_cad.set_layout(gtk.BUTTONBOX_SPREAD)
         vbox_cad.set_spacing(10)
-        frame_cad.add(vbox_cad)
-        
-        vbox_cad.add(button_categorias_dvd)
-        vbox_cad.add(button_generos)
-        vbox_cad.add(button_filmes)
-        vbox_cad.add(button_dvds)
 
 #------Frame Controle
         frame_controle = gtk.Frame("Controle")
-        vbox2.pack_start(frame_controle, True, True, 2)
  
         vbox_controle=gtk.VButtonBox()
         vbox_controle.set_layout(gtk.BUTTONBOX_SPREAD)
         vbox_controle.set_spacing(10)
-        frame_controle.add(vbox_controle)
+        
+#------Frame Loja
+        frame_loja = gtk.Frame("Loja")
+        
+        vbox_loja = gtk.VButtonBox()
+        vbox_loja.set_layout(gtk.BUTTONBOX_SPREAD)
+        vbox_loja.set_spacing(10)
+
+        #--------
+        vbox_cad.add(button_categorias_dvd)
+        vbox_cad.add(button_generos)
+        vbox_cad.add(button_filmes)
+	vbox_cad.add(button_dvds)
+        frame_cad.add(vbox_cad)
+        vbox1.pack_start(frame_cad, True, True, 2)
         
         vbox_controle.add(button_locados)
         vbox_controle.add(button_atrasados)
+        frame_controle.add(vbox_controle)
+        vbox1.pack_start(frame_controle, True, True, 2)
         
+        vbox_loja.add(button_categorias)
+        vbox_loja.add(button_contas)
+        vbox_loja.add(button_produtos)
+        frame_loja.add(vbox_loja)
+        vbox2.pack_start(frame_loja, True, True, 2)
+
+        hbox_main.pack_start(vbox1, True, True, 2)
+        hbox_main.pack_start(vbox2, True, True, 2)
 #-------area de notificacao
         #vbox_main.pack_start(self.notify_box,False, True, 4)
 

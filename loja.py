@@ -9,6 +9,9 @@ from clientes import Cadastro_clientes
 from locacao import Locar, Devolver
 from guicommon import SelectDialog
 
+from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel, ColoredColumn
+from listdialog import FieldType, ListDialog
+
 class Loja:   
     def createMenus(self, vbox, window):
         self.menubar = gtk.MenuBar()
@@ -274,3 +277,112 @@ class PaginaPedido:
         #vbox_main.pack_start(self.notify_box, False, True, 2)
         self.child = gtk.EventBox()
         self.child.add(vbox_main)
+
+class Categorias:
+    def close(self,w):
+        self.w_categorias.destroy()
+
+    def __init__(self, controle):
+ #----Janela       
+        self.w_categorias = gtk.Dialog()
+        self.w_categorias.set_position(gtk.WIN_POS_CENTER)
+        self.w_categorias.connect("destroy", self.close)
+        self.w_categorias.set_title("CEF SHOP - Cadastrar Categorias de produtos")
+        self.w_categorias.set_size_request(600,450)
+        self.w_categorias.set_border_width(8)
+        self.controle = controle
+        
+#-----ListObject
+        fields=[]
+        fields.append(FieldType('cod_categoria', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
+        fields.append(FieldType('cod_conta_padrao', 'Conta padrão', str, 0, None, searchable = True, requerido = False))
+        
+        listobject =  ListDialog(self.controle, 'categorias', 'Categorias')
+        widget = listobject.make_widget(fields)
+        
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+
+#-----Empacota e mostra
+        self.w_categorias.action_area.pack_start(button_close, False, True, 0)        
+        self.w_categorias.vbox.pack_start(widget,True, True, 2)
+        
+        self.w_categorias.show_all()
+        self.w_categorias.show()
+
+#-----------------------------------------------------    
+class Contas:
+    def close(self,w):
+        self.w_contas.destroy()
+
+    def __init__(self, controle):
+ #----Janela       
+        self.w_contas = gtk.Dialog()
+        self.w_contas.set_position(gtk.WIN_POS_CENTER)
+        self.w_contas.connect("destroy", self.close)
+        self.w_contas.set_title("CEF SHOP - Cadastrar Contas")
+        self.w_contas.set_size_request(600,450)
+        self.w_contas.set_border_width(8)
+        self.controle = controle
+        
+#-----ListObject
+        fields=[]
+        fields.append(FieldType('cod_conta', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
+        fields.append(FieldType('faturar', '% fatura', float, 0, None, searchable = False, requerido = False))
+        
+        listobject =  ListDialog(self.controle, 'contas', 'Contas')
+        widget = listobject.make_widget(fields)
+        
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+
+#-----Empacota e mostra
+        self.w_contas.action_area.pack_start(button_close, False, True, 0)        
+        self.w_contas.vbox.pack_start(widget,True, True, 2)
+        
+        self.w_contas.show_all()
+        self.w_contas.show()
+
+#-----------------------------------------------------    
+class Produtos:
+    def close(self,w):
+        self.w_produtos.destroy()
+
+    def __init__(self, controle):
+ #----Janela       
+        self.w_produtos = gtk.Dialog()
+        self.w_produtos.set_position(gtk.WIN_POS_CENTER)
+        self.w_produtos.connect("destroy", self.close)
+        self.w_produtos.set_title("CEF SHOP - Cadastrar Produtos")
+        self.w_produtos.set_size_request(600,450)
+        self.w_produtos.set_border_width(8)
+        self.controle = controle
+        
+#-----ListObject
+        fields=[]
+        fields.append(FieldType('cod_produto', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(FieldType('cod_categoria', 'Categoria', int, 0, None, True, False, tabelacombo = "categorias"))
+        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
+        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True, requerido = False))
+        fields.append(FieldType('preco', 'Preço', float, 0, None, searchable = True, requerido = True))
+        fields.append(FieldType('ativo', 'Ativo', int, 0, None, show_in_list = False, searchable = True, requerido = False))
+        
+        listobject =  ListDialog(self.controle, 'produtos', 'Produtos')
+        widget = listobject.make_widget(fields)
+        
+#-------Botoes     
+        button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
+        button_close.connect("clicked", self.close)
+
+#-----Empacota e mostra
+        self.w_produtos.action_area.pack_start(button_close, False, True, 0)        
+        self.w_produtos.vbox.pack_start(widget,True, True, 2)
+        
+        self.w_produtos.show_all()
+        self.w_produtos.show()
+#-----------------------------------------------------    
+
