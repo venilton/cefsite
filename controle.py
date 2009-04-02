@@ -7,9 +7,14 @@ from datetime import date
 
 from querys import Modelo , Caixa
 from login import Login
-from loja import Loja
 from admin import Admin
 from notify import Notify
+from iconmenu import iconMenuItem
+import locacao
+import dvds
+import loja
+import clientes
+import listdialog
 
 
 #Exceções
@@ -47,7 +52,7 @@ class TabelaControle:
                     self.notify.show_notify('erro', 'Selecione um iten da lista de %s.' % field.titulo)
                     return False
                 
-            if field.requerido and not self.obrigatorio(valor, 'Campo %s não deve ficar em branco.' % field.titulo):
+            if field.requerido and not self.obrigatorio(valor, 'O campo %s não deve ficar em branco.' % field.titulo):
                 return False
         return True
     
@@ -111,17 +116,13 @@ class Controle:
         self.dadoscliente = [0][0]
         self.itens = []
         self.recebido = False
-    
+
     def notify(self):
-        notify = Notification()
-        return notify
+        return Notification()
     
-    def open_loja(self, controle):
-        Loja(controle)
-        
-    def open_admin(self, controle):
-        Admin(controle)
-        
+    def icon_menu(self, title, stock):
+        return iconMenuItem(title, stock)
+            
     def set_modelo(self, modelo):
         self.modelo = modelo
     
@@ -132,6 +133,8 @@ class Controle:
         self.interface = interface
     
     def start(self):
+        """Prepara para carregar a interface"""
+        self.open =Open()
         #instancias das classes que fazem referencias a tabelas no modelo
         #locadora
         self.categorias_dvd = Categorias_dvd(self.modelo, self.modelo.categorias_dvd)
@@ -157,6 +160,12 @@ class Controle:
             self.status = False
             raise CodigoInvalido , 'Código deve conter apenas números'
         return cod
+
+    def listdialog(self):
+        return ListDialog()
+        
+    def fieldtype(self, field_name, titulo, tipo = str, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False, requerido = False, tabelacombo=""):
+        return FieldType(field_name, titulo, tipo , tamanho , mask , show_in_list , show_field , searchable,  identificador, requerido, tabelacombo)
 
 #clientes
     def cliente_localizado(self):
@@ -240,16 +249,9 @@ class Controle:
         self.notify_text = 'ERRO: DVD cod = %s não está alugado!'%(cod_dvd)
         self.status = False
         
-    def cadastra_genero_dvd(self,descricao):
-        self.modelo.generos.insert_item(descricao)
-        return True
-    
     def get_categoria_cod(self):
         return self.cod_categoria
         
-    def cadastra_categoria_dvd(self, descricao, preco):
-        self.cod_categoria = self.modelo.categorias_dvd.insert_item(descricao, preco)
-        return True
     
     def listar_categoria_dvd(self):
         rows = self.modelo.categorias_dvd.select_all()
@@ -428,6 +430,52 @@ class Controle:
     def get_receber_status(self):
         return self.recebido
 
+class Open():
+    def loja(self, controle):
+        loja.Loja(controle)
+        
+    def admin(self, controle):
+        Admin(controle)
+        
+    def categorias_dvd(self, controle):
+        dvds.Categorias_dvd(controle)
+        
+    def generos(self, controle):
+        dvds.Generos(controle)
+        
+    def filmes(self, controle):
+        dvds.Filmes(controle)
+        
+    def dvds(self, controle):
+        dvds.Dvds(controle)
+
+    def locados(self, controle):
+        locacao.Locados(controle)
+
+    def atrasados(self, controle):
+        locacao.Atrasados(controle)
+
+    def locar(self, controle):
+        locacao.Locar(controle)
+
+    def devolver(self, controle):
+        locacao.Devolver(controle)
+        
+    def categorias(self, controle):
+       loja.Categorias(controle)
+    
+    def contas(self, controle):
+        loja.Contas(controle)
+        
+    def produtos(self, controle):
+       loja.Produtos(controle)
+
+    def venda(self, controle):
+        loja.Venda(controle)
+        
+    def cad_clientes (self, controle):
+        clientes.Cadastro_clientes(controle)
+
 #locação
 class Categorias_dvd(TabelaControle):
     def combo(self):
@@ -481,7 +529,12 @@ class Dvds(TabelaControle):
 
 #Clientes
 class Clientes(TabelaControle):
-    pass
+     def combo(self):
+        lista = []
+        rows = self.tabela.select_all_records()
+        for row in rows:
+            lista.append((row['nome'], row['cod_cliente']))
+        return lista
 
 #loja
 class Categorias(TabelaControle):
@@ -526,3 +579,26 @@ class Notification:
             self.add_icon(icon)
             self.msg.set_text(text)
             self.notification.show_all()
+
+#listdialog
+class ListDialog():
+    def  ListObject(self, controle, fields, nome_tabela, titulo):
+        tabela = getattr(controle, nome_tabela)
+        listobject = listdialog.ListDialog(controle, tabela, titulo)
+        return listobject.make_widget(fields)
+        
+class FieldType():
+    def __init__(self, field_name, titulo, tipo , tamanho , mask , show_in_list , show_field , searchable,  identificador, requerido, tabelacombo):
+        self.field_name = field_name
+        self.titulo = titulo or field_name
+        self.tipo = tipo
+        self.tamanho = tamanho
+        self.mask = mask 
+        self.show_in_list = show_in_list
+        self.show_field = show_field
+        self.label = None
+        self.entry = None
+        self.searchable = searchable
+        self.identificador = identificador
+        self.requerido = requerido
+        self.tabelacombo = tabelacombo

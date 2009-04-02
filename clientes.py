@@ -4,8 +4,6 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from iconmenu import iconMenuItem
-from listdialog import FieldType, ListDialog
 
 def entry_activate_cb(entry, lista, data):
     text = entry.get_text()
@@ -97,17 +95,15 @@ class Cadastro_clientes:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_cliente', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True,requerido = True))
-        fields.append(FieldType('endereco', 'Endereço', str, 0, None,requerido = False))
-        fields.append(FieldType('telefone', 'Telefone', str, 0, None,requerido = False))
-        fields.append(FieldType('bairro', 'Bairro', str, 0, None,requerido = False))
-        fields.append(FieldType('cidade', 'Cidade', str, 0, None,requerido = False))
-        fields.append(FieldType('cep', 'Cep', str, 0, None,requerido = False))
-        
-        listobject =  ListDialog(self.controle, 'clientes', 'Clientes' )
-        widget = listobject.make_widget(fields)
-        
+        fields.append(self.controle.fieldtype('cod_cliente', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('nome', 'Nome', str, 0, None, searchable = True,requerido = True))
+        fields.append(self.controle.fieldtype('endereco', 'Endereço', str, 0, None,requerido = False))
+        fields.append(self.controle.fieldtype('telefone', 'Telefone', str, 0, None,requerido = False))
+        fields.append(self.controle.fieldtype('bairro', 'Bairro', str, 0, None,requerido = False))
+        fields.append(self.controle.fieldtype('cidade', 'Cidade', str, 0, None,requerido = False))
+        fields.append(self.controle.fieldtype('cep', 'Cep', str, 0, None,requerido = False))
+        listdialog = self.controle.listdialog()
+        widget=  listdialog.ListObject(self.controle, fields, 'clientes', 'Clientes' )
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
         button_close.connect("clicked", self.close)

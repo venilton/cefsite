@@ -3,20 +3,13 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-
-#from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel, ColoredColumn
 from kiwi.datatypes import currency
 
-from controle import * #FixME: all to controle
-from iconmenu import iconMenuItem
-from clientes import Cadastro_clientes
-from locacao import Locar, Devolver
 from guicommon import SelectDialog
-from listdialog import FieldType, ListDialog
 
 
 class Loja:   
-    def createMenus(self, vbox, window):
+    def createMenus(self, vbox):
         self.menubar = gtk.MenuBar()
         vbox.pack_start(self.menubar, expand=False)
 
@@ -26,30 +19,26 @@ class Loja:
         menu = gtk.Menu()
         topmenuitem.set_submenu(menu)
  
-        menuitem = iconMenuItem(('_Logoff'), gtk.STOCK_QUIT)
+        menuitem = self.controle.icon_menu(('_Logoff'), gtk.STOCK_QUIT)
         menu.add(menuitem)
         menuitem.connect('activate', self.logoff)
 
-        menuitem = iconMenuItem(('_Fechar'),gtk.STOCK_CLOSE)
+        menuitem =self.controle.icon_menu(('_Fechar'),gtk.STOCK_CLOSE)
         #menuitem.connect('activate', self.close) # FixMe : fechar implica passar para a classe login destroy event
         menu.add(menuitem)
 
 
     def open_cad_clientes (self, widget):
-        Cadastro_clientes(self.controle)
-        self.close_notification(widget)
+        self.controle.open.cad_clientes(self.controle)
     
     def open_locar(self, widget):
-        Locar(self.controle)
-        self.close_notification(widget)
+        self.controle.open.locar(self.controle)
 
     def open_venda(self, widget):
-        Venda(self.controle)
-        self.close_notification(widget)
+        self.controle.open.venda(self.controle)
 
     def open_devolver(self, widget):
-        Devolver(self.controle)
-        self.close_notification(widget)
+        self.controle.open.devolver(self.controle)
         
     def logoff(self,widget):
         self.controle.main_status = False
@@ -63,7 +52,7 @@ class Loja:
         #self.w_loja.connect("focus_in_event", self.notification)
         self.w_loja.set_title("CEF SHOP - Loja")
         self.w_loja.set_size_request(580,280)
-        #self.controle = controle
+        self.controle = controle
 
 #---Botoes
         button_clientes = gtk.Button("Clientes")
@@ -82,7 +71,7 @@ class Loja:
         vbox_main = gtk.VBox(False, 2)
         self.w_loja.add(vbox_main)
 #------Menu        
-        self.createMenus(vbox_main, self.w_loja)
+        self.createMenus(vbox_main)
 #------Divisao h principal
         hbox_main = gtk.HBox(False, 2)
         vbox_main.pack_start(hbox_main, True, True, 4)
@@ -297,12 +286,11 @@ class Categorias:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_categoria', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
-        fields.append(FieldType('cod_conta_padrao', 'Conta padrão', str, 0, None, searchable = True, requerido = False))
-        
-        listobject =  ListDialog(self.controle, 'categorias', 'Categorias')
-        widget = listobject.make_widget(fields)
+        fields.append(self.controle.fieldtype('cod_categoria', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
+        fields.append(self.controle.fieldtype('cod_conta_padrao', 'Conta padrão', str, 0, None, searchable = True, requerido = False))
+        listdialog = self.controle.listdialog()
+        widget =  listdialog.ListObject(self.controle, fields, 'categorias', 'Categorias')
         
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
@@ -332,13 +320,12 @@ class Contas:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_conta', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
-        fields.append(FieldType('faturar', '% fatura', int, 0, None, searchable = False, requerido = False))#FixMe: to float, conversion error
-        
-        listobject =  ListDialog(self.controle, 'contas', 'Contas')
-        widget = listobject.make_widget(fields)
-        
+        fields.append(self.controle.fieldtype('cod_conta', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
+        fields.append(self.controle.fieldtype('faturar', '% fatura', int, 0, None, searchable = False, requerido = False))#FixMe: to float, conversion error
+        listdialog = self.controle.listdialog()
+        widget =   listdialog.ListObject(self.controle, fields, 'contas', 'Contas')
+
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
         button_close.connect("clicked", self.close)
@@ -367,15 +354,14 @@ class Produtos:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_produto', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('cod_categoria', 'Categoria', requerido = True,  tabelacombo = "categorias"))
-        fields.append(FieldType('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
-        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True, requerido = False))
-        fields.append(FieldType('preco', 'Preço', currency, 0, None, searchable = True, requerido = True))
-        fields.append(FieldType('ativo', 'Ativo', int, 0, None, show_in_list = False, searchable = True, requerido = False))
-        
-        listobject =  ListDialog(self.controle, 'produtos', 'Produtos')
-        widget = listobject.make_widget(fields)
+        fields.append(self.controle.fieldtype('cod_produto', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('cod_categoria', 'Categoria', requerido = True,  tabelacombo = "categorias"))
+        fields.append(self.controle.fieldtype('nome', 'Nome', str, 0, None, searchable = True, requerido = True))
+        fields.append(self.controle.fieldtype('descricao', 'Descrição', str, 0, None, searchable = True, requerido = False))
+        fields.append(self.controle.fieldtype('preco', 'Preço', currency, 0, None, searchable = True, requerido = True))
+        fields.append(self.controle.fieldtype('ativo', 'Ativo', int, 0, None, show_in_list = False, searchable = True, requerido = False))
+        listdialog = self.controle.listdialog()
+        widget =  listdialog.ListObject(self.controle, fields,'produtos', 'Produtos')
         
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)

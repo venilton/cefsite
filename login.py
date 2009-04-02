@@ -37,14 +37,13 @@ class Login:
             
         #Loja(self.controle)
         
-        self.controle.open_loja(self.controle)
+        self.controle.open.loja(self.controle)
         #list = ListDialog(self.controle, self.controle.modelo.categorias, [], 'Categoria')
         #list.prepare_dialog
         self.w_login.hide()
 
     def open_admin (self, widget):
-        self.controle.open_admin(self.controle)
-        #Admin(self.controle)
+        self.controle.open.admin(self.controle)
         self.w_login.hide()
 
     def __init__(self):

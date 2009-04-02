@@ -231,23 +231,23 @@ def auto_insert():
     query.cursor.execute("insert into categoria(cod_conta_padrao, nome, tipo) values (%s, %s, %s)", (codconta, 'Livros', 2))
     codcategoria2 = query.last_insert_id()
 
-    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paixão, Fogo e Glória - Liberdade', 25.0, 'P', 1))
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paixão, Fogo e Glória - Liberdade', 25, 'P', 1))
     codproduto = query.last_insert_id()
     query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 5))
 
-    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paixão, Fogo e Glória - Liberdade', 25.0, 'M', 1))
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paixão, Fogo e Glória - Liberdade', 25, 'M', 1))
     codproduto = query.last_insert_id()
     query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 5))
 
-    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paixão, Fogo e Glória - Liberdade', 25.0, 'G', 1))
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, tamanho, ativo) values (%s, %s, %s, %s, %s, %s)", (codcategoria1, 'Camiseta Liberdade', 'Camiseta Paixão, Fogo e Glória - Liberdade', 25, 'G', 1))
     codproduto = query.last_insert_id()
     query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 5))
 
-    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, autor, editora, ativo) values (%s, %s, %s, %s, %s, %s, %s)", (codcategoria2, 'Bom dia, Espírito Santo', 'Livro que fala sobre...', 22.0, 'Benny Hinn', 'Editora', 1))
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, autor, editora, ativo) values (%s, %s, %s, %s, %s, %s, %s)", (codcategoria2, 'Bom dia, Espírito Santo', 'Livro que fala sobre...', 22, 'Benny Hinn', 'Editora', 1))
     codproduto = query.last_insert_id()
     query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 3))
 
-    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, autor, editora, ativo) values (%s, %s, %s, %s, %s, %s, %s)", (codcategoria2, 'Os caçadores de Deus', 'Livro que fala sobre...', 18.0, 'Tommy Tenney', 'Editora', 1))
+    query.cursor.execute("insert into produto(cod_categoria, nome, descricao, preco, autor, editora, ativo) values (%s, %s, %s, %s, %s, %s, %s)", (codcategoria2, 'Os caçadores de Deus', 'Livro que fala sobre...', 18, 'Tommy Tenney', 'Editora', 1))
     codproduto = query.last_insert_id()
     query.cursor.execute("insert into estoque(cod_produto, localiz, quantidade) values (%s, %s, %s)", (codproduto, 'PAD', 3))
 

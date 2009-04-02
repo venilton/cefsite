@@ -154,7 +154,7 @@ def produto():
           cod_categoria INTEGER UNSIGNED NOT NULL,
           nome VARCHAR(40) NULL,
           descricao TEXT NULL,
-          preco FLOAT(12,2) NULL,
+          preco VARCHAR(12) NULL,
           tamanho VARCHAR(4) NULL,
           autor VARCHAR(50) NULL,
           editora VARCHAR(40) NULL,

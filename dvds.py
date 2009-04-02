@@ -3,12 +3,11 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from kiwi.datatypes import currency
-from iconmenu import iconMenuItem 
-from listdialog import FieldType, ListDialog, ListToolButton #FixMe: to controle
+
+from kiwi.datatypes import currency 
 
 
-class Categorias:
+class Categorias_dvd:
     def close(self,w):
         self.w_categorias_dvd.destroy()
 
@@ -24,12 +23,11 @@ class Categorias:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_categoria', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('descricao', 'Descrição', str, 0, searchable = True,requerido = True))
-        fields.append(FieldType('preco', 'Preço',currency, 0,  requerido = True))
-        
-        listobject =  ListDialog(self.controle, 'categorias_dvd', 'Categorias' )
-        widget = listobject.make_widget(fields)
+        fields.append(self.controle.fieldtype('cod_categoria', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('descricao', 'Descrição', str, 0, searchable = True,requerido = True))
+        fields.append(self.controle.fieldtype('preco', 'Preço',currency, 0,  requerido = True))
+        listdialog = self.controle.listdialog()
+        widget = listdialog.ListObject(self.controle, fields, 'categorias_dvd', 'Categorias' )
         
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
@@ -58,11 +56,10 @@ class Generos:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_genero', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('descricao', 'Descrição', str, 0, None, searchable = True))
-        
-        listobject =  ListDialog(self.controle, 'generos', 'Generos' )
-        widget = listobject.make_widget(fields)
+        fields.append(self.controle.fieldtype('cod_genero', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('descricao', 'Descrição', str, 0, None, searchable = True))
+        listdialog = self.controle.listdialog()
+        widget =  listdialog.ListObject(self.controle, fields, 'generos', 'Generos' )
         
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
@@ -91,15 +88,14 @@ class Filmes:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_filme', '#', int, 0, None, True, False, identificador = True,))
-        fields.append(FieldType('titulo', 'Titulo', str, 0, None, searchable = True,requerido = True))
-        fields.append(FieldType('cod_genero', 'Genero',requerido = True, tabelacombo='generos'))
-        fields.append(FieldType('cod_categoria', 'Categoria',requerido = True, tabelacombo='categorias_dvd'))
-        fields.append(FieldType('quantidade', 'Quantidade',int, 0, None,requerido = True))
+        fields.append(self.controle.fieldtype('cod_filme', '#', int, 0, None, True, False, identificador = True,))
+        fields.append(self.controle.fieldtype('titulo', 'Titulo', str, 0, None, searchable = True,requerido = True))
+        fields.append(self.controle.fieldtype('cod_genero', 'Genero',requerido = True, tabelacombo='generos'))
+        fields.append(self.controle.fieldtype('cod_categoria', 'Categoria',requerido = True, tabelacombo='categorias_dvd'))
+        fields.append(self.controle.fieldtype('quantidade', 'Quantidade',int, 0, None,requerido = True))
         
-        listobject =  ListDialog(self.controle, 'filmes', 'Filmes' )
-        
-        widget = listobject.make_widget(fields)
+        listdialog = self.controle.listdialog()
+        widget = listdialog.ListObject(self.controle, fields,  'filmes', 'Filmes' )
         
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)
@@ -128,11 +124,11 @@ class Dvds:
         
 #-----ListObject
         fields=[]
-        fields.append(FieldType('cod_dvd', 'Código do DvD', int, 0, None, True, False, identificador = True))
-        fields.append(FieldType('cod_filme', 'Codigo do Filme', int, 0, None,False, False, searchable = True))#Titulo do filme
-        fields.append(FieldType('titulo', 'Titulo', str, 0, None,True, False, searchable = True))#Titulo do filme
-        listobject =  ListDialog(self.controle, 'dvds', 'Dvds' )
-        widget = listobject.make_widget(fields)
+        fields.append(self.controle.fieldtype('cod_dvd', 'Código do DvD', int, 0, None, True, False, identificador = True))
+        fields.append(self.controle.fieldtype('cod_filme', 'Codigo do Filme', int, 0, None,False, False, searchable = True))#Titulo do filme
+        fields.append(self.controle.fieldtype('titulo', 'Titulo', str, 0, None,True, False, searchable = True))#Titulo do filme
+        listdialog = self.controle.listdialog()
+        widget = listdialog.ListObject(self.controle, fields, 'dvds', 'Dvds' )
         
 #-------Botoes     
         button_close = gtk.Button(stock=gtk.STOCK_CLOSE)

@@ -55,7 +55,6 @@ class Notify(gtk.HBox):
     def remove_icon(self):
         if self.icons:
             for icon in self.icons:
-                print icon
                 self.icon_area.remove (icon)
             self.icons = []
         

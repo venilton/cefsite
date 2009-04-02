@@ -5,11 +5,7 @@ pygtk.require('2.0')
 import gtk
 from kiwi.datatypes import currency
 from kiwi.ui.objectlist import Column, ObjectList, SummaryLabel
-
-from notify import Notify
-from iconmenu import iconMenuItem
-from clientes import localizar_cliente
-from receber import Receber
+from kiwi.ui.comboentry import ComboEntry
 
 
 class Locar:
@@ -29,20 +25,23 @@ class Locar:
         self.w_locar.destroy()
         
     def sensitive(self,is_sensitive = False):
-        self.entry_nome_cliente.set_sensitive(is_sensitive)
-        self.entry_cod_dvd.set_sensitive(is_sensitive)
+        pass
+        #self.entry_nome_cliente.set_sensitive(is_sensitive)
+        #self.entry_cod_dvd.set_sensitive(is_sensitive)
         
     def localizado(self, widget, focus):
-        dadoscliente = self.controle.cliente_localizado()
-        if dadoscliente[0] == True:
-            self.entry_cod_cliente.set_text(str(dadoscliente[1][0][0]))
-            self.entry_nome_cliente.set_text(dadoscliente[1][0][1])
-            self.sensitive(True)
-            self.entry_cod_dvd.grab_focus()
+        pass
+    #    dadoscliente = self.controle.cliente_localizado()
+      #  if dadoscliente[0] == True:
+        #    self.entry_cod_cliente.set_text(str(dadoscliente[1][0][0]))
+          #  self.entry_nome_cliente.set_text(dadoscliente[1][0][1])
+            #self.sensitive(True)
+            #self.entry_cod_dvd.grab_focus()
 
     def receber (self,  widget):
-        itens = self.controle.receber_locacao(self.lista)
-        Receber(self.controle, self.w_locar, itens)
+        pass
+        #itens = self.controle.receber_locacao(self.lista)
+        #Receber(self.controle, self.w_locar, itens)
         
     def cadastra (self, widget, focus):
         recebido = self.controle.get_receber_status()
@@ -115,7 +114,6 @@ class Locar:
         self.w_locar.set_size_request(650,400)
         self.w_locar.set_border_width(8)
         self.controle = controle
-        self.notify_box = Notify(self.controle)
         self.quant_itens = 0
      
 #------Divisao v principal
@@ -145,19 +143,25 @@ class Locar:
         label_cod_cliente = gtk.Label("Codigo :")
         f_cliente.put(label_cod_cliente, 2, 8)
         
-        self.entry_cod_cliente = gtk.Entry(0)        
+        self.entry_cod_cliente = gtk.Entry(0)
         self.entry_cod_cliente.set_size_request(60,28)
         self.entry_cod_cliente.connect("activate", self.localizar_cliente_cod)
         f_cliente.put(self.entry_cod_cliente,60, 4)
 
-        self.entry_nome_cliente = gtk.Entry(0)        
-        self.entry_nome_cliente.set_size_request(400,28)
-        self.entry_nome_cliente.set_editable(False)
+        #self.entry_nome_cliente = gtk.Entry(0) 
+        self.entry_nome_cliente = ComboEntry()
+        self.entry_nome_cliente.set_size_request(500, 26)
+        
+        tabelacombo = self.controle.clientes
+        itens = tabelacombo.combo()
+        self.entry_nome_cliente.prefill(itens)
+        
+        #self.entry_nome_cliente.set_editable(False)
         f_cliente.put(self.entry_nome_cliente,122, 4)
         
-        button_localizar_cliente = gtk.Button(stock=gtk.STOCK_FIND)
-        button_localizar_cliente.connect("clicked", localizar_cliente, self.w_locar, self.controle, self.notify_box)
-        f_cliente.put(button_localizar_cliente,524, 0)
+        #button_localizar_cliente = gtk.Button(stock=gtk.STOCK_FIND)
+        #button_localizar_cliente.connect("clicked", localizar_cliente, self.w_locar, self.controle)
+        #f_cliente.put(button_localizar_cliente,524, 0)
     
         hbox_cliente.pack_start(f_cliente, False, True, 4)
 
@@ -209,7 +213,6 @@ class Locar:
         vbox_lista.pack_start(label, False, False, 4)
 
 #-------area de notificacao
-        vbox_main.pack_start(self.notify_box, False, True, 2)
 
 #-------Botoes     
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
@@ -229,7 +232,6 @@ class Locar:
         
         self.sensitive()
         self.w_locar.show_all()
-        self.notify_box.hide()
         self.w_locar.show()
 
 
@@ -272,9 +274,10 @@ class Devolver:
                 self.lista.emit('cell-edited', self.lista, atributo)
             else:
                 self.lista.refresh(False)
-            self.notify_box.hide()
+            #self.notify_box.hide()
         else:
-            self.notify_box.show()
+            pass
+            #self.notify_box.show()
         self.entry_cod_dvd.set_text('')
         self.entry_cod_dvd.grab_focus()
         
@@ -313,7 +316,6 @@ class Devolver:
         self.w_devolver.set_size_request(650,400)
         self.w_devolver.set_border_width(8)
         self.controle = controle
-        self.notify_box = Notify(self.controle)
         self.quant_itens = 0
 
 #-------Elementos       
@@ -406,7 +408,7 @@ class Devolver:
         vbox_lista.pack_start(label, False, False, 4)
         
 #-------area de notificacao
-        vbox_main.pack_start(self.notify_box,False, True, 4)
+
 
 #-------Botoes     
         button_cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
@@ -425,7 +427,6 @@ class Devolver:
         button_cancel.grab_default()
 
         self.w_devolver.show_all()
-        self.notify_box.hide()
         self.w_devolver.show()
         
 class Locados:    

@@ -3,10 +3,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from iconmenu import iconMenuItem #FixME: to controle
-from locacao import Locados, Atrasados #FixMe: to controle
-from dvds import * #FixMe: to controle
-import loja #FixMe: admin importa loja? controle 
+
 
 class Admin:
     def createMenus(self, vbox):
@@ -19,53 +16,52 @@ class Admin:
         menu = gtk.Menu()
         topmenuitem.set_submenu(menu)
  
-        menuitem = iconMenuItem(('_Logoff'), gtk.STOCK_QUIT)
+        menuitem =self.controle.icon_menu(('_Logoff'), gtk.STOCK_QUIT)
         menu.add(menuitem)
         menuitem.connect('activate', self.logoff)
 
-        menuitem = iconMenuItem(('_Fechar'),gtk.STOCK_CLOSE)
+        menuitem =self.controle.icon_menu(('_Fechar'),gtk.STOCK_CLOSE)
         #menuitem.connect('activate', gtk.main_quit())
         menu.add(menuitem)
     
     def open_categorias_dvd(self, widget):
-        Categorias(self.controle)
+        self.controle.open.categorias_dvd(self.controle)
     
     def open_generos(self, widget):
-        Generos(self.controle)
+        self.controle.open.generos(self.controle)
         
     def open_filmes(self, widget):
-        Filmes(self.controle)
+        self.controle.open.filmes(self.controle)
 
     def open_dvds(self, widget):
-        Dvds(self.controle)
+        self.controle.open.dvds(self.controle)
 
     def open_locados(self, widget):
-        Locados(self.controle)
+        self.controle.open.locados(self.controle)
 
     def open_atrasados(self, widget):
-        Atrasados(self.controle)
+        self.controle.open.atrasados(self.controle)
         
     def open_categorias(self, widget):
-        loja.Categorias(self.controle)
+        self.controle.open.categorias(self.controle)
     
     def open_contas(self, widget):
-        loja.Contas(self.controle)
+        self.controle.open.contas(self.controle)
         
     def open_produtos(self, widget):
-        loja.Produtos(self.controle)
+        self.controle.open.produtos(self.controle)
 
     def logoff(self,widget):
         self.w_admin.destroy()
         self.controle.logoff()
     
-    def __init__(self,controle):
+    def __init__(self, controle):
         self.w_admin = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.w_admin.set_position(gtk.WIN_POS_CENTER)
         self.w_admin.connect("delete_event", lambda w,e: gtk.main_quit())
         self.w_admin.set_title("CEF SHOP - Administração")
         self.w_admin.set_size_request(580,350)
         self.controle = controle
-        #self.notify_box = Notify()
 
 #---Botoes
         button_generos = gtk.Button("Generos")

@@ -1,9 +1,9 @@
 Requisitos de Software
 ----------------------
-python >2.5
+python >=2.5
 gtk >=2.0
 python-gtk2 >2.14
-mysql-server >5.1
+mysql-server >=5.1
 python-mysqldb >1.2.2
 python-kiwi >1.9.22
 

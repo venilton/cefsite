@@ -12,22 +12,10 @@ from kiwi.ui.dialogs import yesno
 from kiwi.utils import gsignal, quote
 
 
-class FieldType:
-    """ Classe que define um campo no diálogo ListDialog. """
-    def __init__(self, field_name, titulo, tipo = str, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False, requerido = False, tabelacombo=""):
-        self.field_name = field_name
-        self.titulo = titulo or field_name
-        self.tipo = tipo
-        self.tamanho = tamanho
-        self.mask = mask 
-        self.show_in_list = show_in_list
-        self.show_field = show_field
-        self.label = None
-        self.entry = None
-        self.searchable = searchable
-        self.identificador = identificador
-        self.requerido = requerido
-        self.tabelacombo = tabelacombo
+#class FieldType:
+#    """ Classe que define um campo no diálogo ListDialog. """
+#    def __init__(self, field_name, titulo, tipo = str, tamanho = 0, mask = "", show_in_list = True, show_field = True, searchable = False,  identificador = False, requerido = False, tabelacombo=""):
+
 
 class ListToolButton:
     """ Classe que define um botão no Toolbar. """
@@ -55,8 +43,7 @@ class ListDialog:
             tabela é o nome de uma instancia de Classe no Controle que referencia um tabela no Modelo.
             titulo é nome de leitura da tabela sendo editada (ex. 'Categorias') """
         self.controle = controle
-        self.tabela = getattr(self.controle, tabela)
-        self.fields = []
+        self.tabela = tabela
         self.data = []
         self.buttons = []
         self.new_method = self.create_new_record
